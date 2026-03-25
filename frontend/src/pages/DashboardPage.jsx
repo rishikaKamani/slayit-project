@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import HabitCard from '../components/HabitCard';
@@ -26,6 +26,7 @@ function addToHistory(prev, habit, type) {
 
 export default function DashboardPage() {
   const [habits, setHabits] = useState([]);
+  const habitsRef = useRef([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -43,6 +44,7 @@ export default function DashboardPage() {
     api.get('/habits').then((res) => {
       const fetched = res.data || [];
       setHabits(fetched);
+      habitsRef.current = fetched;
 
         const today = new Date(); today.setHours(0,0,0,0);
         fetched.forEach((h) => {
@@ -87,21 +89,29 @@ export default function DashboardPage() {
 
   // Called by HabitCard when all days are marked done or period over
   const handleCompleted = (habitId) => {
-    const habit = habits.find((h) => h.id === habitId);
+    const habit = habitsRef.current.find((h) => h.id === habitId);
     if (habit) {
       setHistory((prev) => addToHistory(prev, habit, 'completed'));
     }
     setHiddenIds((prev) => prev.includes(habitId) ? prev : [...prev, habitId]);
-    setHabits((prev) => prev.filter((h) => h.id !== habitId));
+    setHabits((prev) => {
+      const updated = prev.filter((h) => h.id !== habitId);
+      habitsRef.current = updated;
+      return updated;
+    });
   };
 
   // Called by HabitCard on delete
   const handleDeleted = (habitId) => {
-    const habit = habits.find((h) => h.id === habitId);
+    const habit = habitsRef.current.find((h) => h.id === habitId);
     if (habit) {
       setHistory((prev) => addToHistory(prev, habit, 'deleted'));
     }
-    setHabits((prev) => prev.filter((h) => h.id !== habitId));
+    setHabits((prev) => {
+      const updated = prev.filter((h) => h.id !== habitId);
+      habitsRef.current = updated;
+      return updated;
+    });
   };
 
   return (
