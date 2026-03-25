@@ -1,0 +1,137 @@
+.welcome-page-minimal {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background:
+    radial-gradient(circle at top left, #f8d7ea 0%, transparent 28%),
+    radial-gradient(circle at bottom right, #e2d4fb 0%, transparent 30%),
+    linear-gradient(180deg, #fbf7fc 0%, #f3eef8 100%);
+}
+
+.welcome-card {
+  width: 100%;
+  max-width: 520px;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 36px;
+  padding: 52px 34px 40px;
+  box-shadow: 0 20px 60px rgba(124, 90, 136, 0.12);
+}
+
+.sarcasm-bubble {
+  display: inline-block;
+  position: relative;
+  margin-bottom: 22px;
+  padding: 14px 22px;
+  border-radius: 999px;
+  background: #f5d6e8;
+  color: #57384f;
+  font-size: 0.98rem;
+  font-weight: 700;
+  line-height: 1.4;
+  box-shadow: 0 10px 24px rgba(240, 138, 192, 0.16);
+}
+
+.sarcasm-bubble::after {
+  content: "";
+  position: absolute;
+  left: 38px;
+  bottom: -10px;
+  width: 18px;
+  height: 18px;
+  background: #f5d6e8;
+  transform: rotate(45deg);
+  border-radius: 4px;
+}
+
+.welcome-tag {
+  margin: 12px 0 10px;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  color: #9d7a9b;
+}
+
+.welcome-title {
+  margin: 0;
+  font-size: 4.2rem;
+  line-height: 1;
+  font-weight: 800;
+  color: #2e2430;
+}
+
+.welcome-subtext {
+  max-width: 390px;
+  margin: 18px auto 30px;
+  font-size: 1.02rem;
+  line-height: 1.65;
+  color: #6f5d72;
+}
+
+.welcome-actions {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.bubble-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 160px;
+  padding: 15px 26px;
+  border-radius: 999px;
+  text-decoration: none;
+  font-size: 1rem;
+  font-weight: 800;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.bubble-btn:hover {
+  transform: translateY(-2px);
+}
+
+.primary-bubble {
+  background: linear-gradient(135deg, #f08ac0 0%, #d784f7 100%);
+  color: #ffffff;
+  box-shadow: 0 14px 30px rgba(215, 132, 247, 0.28);
+}
+
+.primary-bubble:hover {
+  box-shadow: 0 18px 34px rgba(215, 132, 247, 0.34);
+}
+
+.secondary-bubble {
+  background: #eef1c9;
+  color: #4c5622;
+  box-shadow: 0 10px 24px rgba(176, 186, 98, 0.16);
+}
+
+.secondary-bubble:hover {
+  box-shadow: 0 14px 28px rgba(176, 186, 98, 0.22);
+}
+
+@media (max-width: 640px) {
+  .welcome-card {
+    padding: 42px 22px 32px;
+    border-radius: 28px;
+  }
+
+  .welcome-title {
+    font-size: 3.2rem;
+  }
+
+  .sarcasm-bubble {
+    font-size: 0.9rem;
+    padding: 12px 18px;
+  }
+
+  .bubble-btn {
+    width: 100%;
+  }
+}
