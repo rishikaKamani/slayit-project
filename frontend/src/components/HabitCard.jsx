@@ -1,11 +1,11 @@
-﻿import { useEffect, useMemo, useRef, useState } from "react";
+﻿import { useEffect, useRef, useState } from "react";
 import api from "../api/client";
 import DayBubbleRow from "./DayBubbleRow";
 import { calculateStreak, countCompletedDays, getCurrentDayIndex, isFullyCompleted, isHabitPeriodOver } from "../utils/streak";
 import "./streak-polish.css";
 
 const MILESTONES = [3, 7, 10];
-const BIG_EMOJI = { crown: "\uD83D\uDC51", fire: "\uD83D\uDD25", muscle: "\uD83D\uDCAA", smile: "\uD83D\uDE42", grimace: "\uD83D\uDE2C", skull: "\uD83D\uDC80" };
+const EMOJI = { crown: "\uD83D\uDC51", fire: "\uD83D\uDD25", muscle: "\uD83D\uDCAA", smile: "\uD83D\uDE42", grimace: "\uD83D\uDE2C", skull: "\uD83D\uDC80" };
 
 export default function HabitCard({ habit, onHideCompleted, onDelete }) {
   const duration = Number(habit.durationDays || 1);
@@ -13,6 +13,7 @@ export default function HabitCard({ habit, onHideCompleted, onDelete }) {
     if (h.days && h.days.length > 0) return h.days.map((d) => ({ day: d.day, status: (d.status || "pending").toLowerCase().trim() }));
     return Array.from({ length: Number(h.durationDays || 1) }, (_, i) => ({ day: i + 1, status: "pending" }));
   };
+
   const [days, setDays] = useState(() => buildDays(habit));
   const [feedback, setFeedback] = useState("");
   const [saving, setSaving] = useState(false);
@@ -22,25 +23,34 @@ export default function HabitCard({ habit, onHideCompleted, onDelete }) {
   const [showConfetti, setShowConfetti] = useState(false);
   const [celebrationText, setCelebrationText] = useState("");
   const [animateEmoji, setAnimateEmoji] = useState(false);
-  const firedRef = useRef(false);
   const previousStreakRef = useRef(0);
+  const habitIdRef = useRef(habit.id);
   const onHideRef = useRef(onHideCompleted);
+  const hideFiredRef = useRef(false);
+
   useEffect(() => { onHideRef.current = onHideCompleted; });
 
-  const triggerHide = (notice) => {
-    if (firedRef.current) return;
-    firedRef.current = true;
-    setCompletionNotice(notice);
-    setTimeout(() => setIsHiding(true), 2200);
-    setTimeout(() => { if (onHideRef.current) onHideRef.current(habit.id); }, 2600);
-  };
-
+  // Check on every days change — if fully done, trigger hide
   useEffect(() => {
-    if (isFullyCompleted(days)) { setShowConfetti(true); triggerHide("You did it. Every single day. That's rare."); }
+    if (hideFiredRef.current) return;
+    if (isFullyCompleted(days)) {
+      hideFiredRef.current = true;
+      setShowConfetti(true);
+      setCompletionNotice("You did it. Every single day. That's rare.");
+      setTimeout(() => setIsHiding(true), 2200);
+      setTimeout(() => { if (onHideRef.current) onHideRef.current(habitIdRef.current); }, 2600);
+    }
   }, [days]);
 
+  // Check on mount — if period is over, trigger hide
   useEffect(() => {
-    if (!isFullyCompleted(days) && isHabitPeriodOver(habit.createdDate, duration)) triggerHide("Habit period ended. Moving to history...");
+    if (hideFiredRef.current) return;
+    if (!isFullyCompleted(buildDays(habit)) && isHabitPeriodOver(habit.createdDate, duration)) {
+      hideFiredRef.current = true;
+      setCompletionNotice("Habit period ended. Moving to history...");
+      setTimeout(() => setIsHiding(true), 2200);
+      setTimeout(() => { if (onHideRef.current) onHideRef.current(habitIdRef.current); }, 2600);
+    }
   }, []);
 
   const currentDayIndex = getCurrentDayIndex(days);
@@ -50,18 +60,18 @@ export default function HabitCard({ habit, onHideCompleted, onDelete }) {
   const fullyDone = isFullyCompleted(days);
   const daysLeft = Math.max(duration - completedCount, 0);
 
-  const todayStatus = useMemo(() => {
+  const streakMsg = streak >= 10 ? "Unstoppable." : streak >= 7 ? "Serious consistency." : streak >= 3 ? "Building momentum." : streak >= 1 ? "Started. Keep going." : "No momentum yet.";
+  const emojiKey = streak >= 10 ? "crown" : streak >= 7 ? "fire" : streak >= 3 ? "muscle" : streak >= 1 ? "smile" : completedCount > 0 ? "grimace" : "skull";
+  const emojiText = streak >= 10 ? "Discipline mode" : streak >= 7 ? "On fire" : streak >= 3 ? "Momentum rising" : streak >= 1 ? "Getting started" : "No consistency";
+
+  const todayStatus = (() => {
     if (fullyDone) return "Completed";
     if (currentDayIndex === -1) return "Over";
     const s = days[currentDayIndex] ? days[currentDayIndex].status : "";
     if (s === "done") return "Done";
     if (s === "missed") return "Missed";
     return "Pending";
-  }, [currentDayIndex, days, fullyDone]);
-
-  const streakMsg = streak >= 10 ? "Unstoppable." : streak >= 7 ? "Serious consistency." : streak >= 3 ? "Building momentum." : streak >= 1 ? "Started. Keep going." : "No momentum yet.";
-  const emojiKey = streak >= 10 ? "crown" : streak >= 7 ? "fire" : streak >= 3 ? "muscle" : streak >= 1 ? "smile" : completedCount > 0 ? "grimace" : "skull";
-  const emojiText = streak >= 10 ? "Discipline mode" : streak >= 7 ? "On fire" : streak >= 3 ? "Momentum rising" : streak >= 1 ? "Getting started" : "No consistency";
+  })();
 
   const handleCelebration = (newStreak) => {
     if (!MILESTONES.includes(newStreak)) return;
@@ -145,7 +155,7 @@ export default function HabitCard({ habit, onHideCompleted, onDelete }) {
       <div className="streak-side-box">
         <div className="streak-pill">{streak} day streak</div>
         <div className={"big-emoji-box" + (animateEmoji ? " emoji-bounce" : "")}>
-          <div className="big-emoji">{BIG_EMOJI[emojiKey]}</div>
+          <div className="big-emoji">{EMOJI[emojiKey]}</div>
           <div className="big-emoji-text">{emojiText}</div>
         </div>
         {celebrationText && <div className={"celebration-banner" + (showConfetti ? " show-banner" : "")}>{celebrationText}</div>}
