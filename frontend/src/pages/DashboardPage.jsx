@@ -89,10 +89,14 @@ export default function DashboardPage() {
 
   // Called by HabitCard when all days are marked done or period over
   const handleCompleted = (habitId) => {
-    const habit = habitsRef.current.find((h) => h.id === habitId);
-    if (habit) {
-      setHistory((prev) => addToHistory(prev, habit, 'completed'));
-    }
+    const habit = habitsRef.current.find((h) => h.id === habitId) || habits.find((h) => h.id === habitId);
+    setHistory((prev) => {
+      const entry = habit
+        ? { id: habit.id, name: habit.name, category: habit.category, durationDays: habit.durationDays, type: 'completed', date: new Date().toLocaleDateString() }
+        : { id: habitId, name: 'Habit', category: '', durationDays: 0, type: 'completed', date: new Date().toLocaleDateString() };
+      const filtered = prev.filter((h) => h.id !== habitId);
+      return [entry, ...filtered];
+    });
     setHiddenIds((prev) => prev.includes(habitId) ? prev : [...prev, habitId]);
     setHabits((prev) => {
       const updated = prev.filter((h) => h.id !== habitId);
