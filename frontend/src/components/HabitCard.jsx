@@ -1,7 +1,7 @@
 ﻿import { useEffect, useRef, useState } from "react";
 import api from "../api/client";
 import DayBubbleRow from "./DayBubbleRow";
-import { calculateStreak, countCompletedDays, getCurrentDayIndex, isFullyCompleted, isHabitPeriodOver } from "../utils/streak";
+import { calculateStreak, countCompletedDays, getCurrentDayIndex, isFullyCompleted } from "../utils/streak";
 import "./streak-polish.css";
 
 const MILESTONES = [3, 7, 10];
@@ -24,35 +24,9 @@ export default function HabitCard({ habit, onHideCompleted, onDelete }) {
   const [celebrationText, setCelebrationText] = useState("");
   const [animateEmoji, setAnimateEmoji] = useState(false);
   const previousStreakRef = useRef(0);
-  const habitIdRef = useRef(habit.id);
   const onHideRef = useRef(onHideCompleted);
-  const completionFiredRef = useRef(false);
-  const periodFiredRef = useRef(false);
 
   useEffect(() => { onHideRef.current = onHideCompleted; });
-
-  useEffect(() => {
-    if (completionFiredRef.current) return;
-    if (isFullyCompleted(days)) {
-      completionFiredRef.current = true;
-      periodFiredRef.current = true;
-      setShowConfetti(true);
-      setCompletionNotice("You did it. Every single day. That's rare.");
-      setTimeout(() => setIsHiding(true), 2200);
-      setTimeout(() => { if (onHideRef.current) onHideRef.current(habitIdRef.current); }, 2600);
-    }
-  }, [days]);
-
-  useEffect(() => {
-    if (periodFiredRef.current) return;
-    if (isHabitPeriodOver(habit.createdDate, duration)) {
-      periodFiredRef.current = true;
-      completionFiredRef.current = true;
-      setCompletionNotice("Habit period ended. Moving to history...");
-      setTimeout(() => setIsHiding(true), 2200);
-      setTimeout(() => { if (onHideRef.current) onHideRef.current(habitIdRef.current); }, 2600);
-    }
-  }, []);
 
   const currentDayIndex = getCurrentDayIndex(days);
   const completedCount = countCompletedDays(days);
@@ -82,6 +56,14 @@ export default function HabitCard({ habit, onHideCompleted, onDelete }) {
     setTimeout(() => setAnimateEmoji(false), 900);
   };
 
+  const triggerCompletion = (habitId) => {
+    setShowConfetti(true);
+    setCompletionNotice("You did it. Every single day. That's rare.");
+    setIsHiding(true);
+    // Remove from dashboard after short delay for animation
+    setTimeout(() => { if (onHideRef.current) onHideRef.current(habitId); }, 800);
+  };
+
   const handleMark = async (status) => {
     if (saving || currentDayIndex === -1) return;
     setSaving(true);
@@ -93,6 +75,10 @@ export default function HabitCard({ habit, onHideCompleted, onDelete }) {
       setFeedback((res.data && res.data.feedback) || (status === "DONE" ? "Saved." : "Missed day saved."));
       if (status === "DONE" && newStreak > previousStreakRef.current) handleCelebration(newStreak);
       previousStreakRef.current = newStreak;
+      // If this was the last day, trigger completion immediately
+      if (isFullyCompleted(updated)) {
+        triggerCompletion(habit.id);
+      }
     } catch (err) { setFeedback((err.response && err.response.data && err.response.data.message) || "Could not save."); }
     finally { setSaving(false); }
   };
