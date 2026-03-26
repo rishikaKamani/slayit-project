@@ -15,10 +15,20 @@ function addToHistory(prev, habit, type) {
   ];
 }
 
+function parseDate(raw) {
+  if (!raw) return null;
+  // array: [2026, 3, 22]
+  if (Array.isArray(raw)) return new Date(raw[0], raw[1] - 1, raw[2]);
+  // string: "2026-03-22" or "2026-03-22T00:00:00"
+  const s = String(raw).split('T')[0];
+  const p = s.split('-');
+  if (p.length === 3) return new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+  return null;
+}
+
 function isPeriodOver(h) {
-  if (!h.createdDate) return false;
-  const parts = String(h.createdDate).split('T')[0].split('-');
-  const start = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+  const start = parseDate(h.createdDate);
+  if (!start) return false;
   const today = new Date(); today.setHours(0, 0, 0, 0);
   return Math.floor((today - start) / 86400000) >= Number(h.durationDays);
 }

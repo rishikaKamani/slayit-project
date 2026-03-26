@@ -8,32 +8,14 @@ const MILESTONES = [3, 7, 10];
 const EMOJI = { crown: "\uD83D\uDC51", fire: "\uD83D\uDD25", muscle: "\uD83D\uDCAA", smile: "\uD83D\uDE42", grimace: "\uD83D\uDE2C", skull: "\uD83D\uDC80" };
 
 const STREAK_MSGS = {
-  high:   ["Unstoppable. Annoyingly so.", "You're showing off now.", "Okay fine, you're built different.", "This is getting suspicious.", "Double digits. Calm down."],
-  good:   ["Serious consistency. Gross.", "You're actually doing it.", "Seven days. Who even are you?", "Respect. Reluctantly.", "This is real now."],
-  mid:    ["Building momentum. Don't ruin it.", "Three days in. Don't get cocky.", "Okay, you're trying.", "Momentum rising. Barely.", "Keep going before you forget."],
-  low:    ["Started. Try not to stop.", "One day. Let's not celebrate yet.", "A start. Suspicious, but a start.", "Day one. Classic.", "Fine. You showed up."],
-  zero:   ["No momentum yet. Shocking.", "Zero streak. A bold choice.", "Nothing. Truly nothing.", "The streak is a myth right now.", "You could start. You won't. But you could."],
+  high: ["Unstoppable. Annoyingly so.", "You're showing off now.", "Okay fine, you're built different.", "This is getting suspicious.", "Double digits. Calm down."],
+  good: ["Serious consistency. Gross.", "You're actually doing it.", "Seven days. Who even are you?", "Respect. Reluctantly.", "This is real now."],
+  mid:  ["Building momentum. Don't ruin it.", "Three days in. Don't get cocky.", "Okay, you're trying.", "Momentum rising. Barely.", "Keep going before you forget."],
+  low:  ["Started. Try not to stop.", "One day. Let's not celebrate yet.", "A start. Suspicious, but a start.", "Day one. Classic.", "Fine. You showed up."],
+  zero: ["No momentum yet. Shocking.", "Zero streak. A bold choice.", "Nothing. Truly nothing.", "The streak is a myth right now.", "You could start. You won't. But you could."],
 };
-
-const DONE_MSGS = [
-  "Done? Nice. Bare minimum, but still nice.",
-  "Saved. Your future self is mildly impressed.",
-  "Logged. Don't expect applause.",
-  "Done. One day at a time, apparently.",
-  "Marked done. The bar was low. You cleared it.",
-  "Okay fine, you did it.",
-  "Logged. Try doing it again tomorrow.",
-];
-
-const MISSED_MSGS = [
-  "Missed it. Your future self is unimpressed.",
-  "Logged as missed. Bold strategy.",
-  "Skipped. The streak noticed.",
-  "Missed. The habit didn't miss you though.",
-  "Another miss. Interesting pattern.",
-  "Noted. Not great, not great at all.",
-];
-
+const DONE_MSGS = ["Done? Nice. Bare minimum, but still nice.", "Saved. Your future self is mildly impressed.", "Logged. Don't expect applause.", "Done. One day at a time, apparently.", "Marked done. The bar was low. You cleared it.", "Okay fine, you did it.", "Logged. Try doing it again tomorrow."];
+const MISSED_MSGS = ["Missed it. Your future self is unimpressed.", "Logged as missed. Bold strategy.", "Skipped. The streak noticed.", "Missed. The habit didn't miss you though.", "Another miss. Interesting pattern.", "Noted. Not great, not great at all."];
 const MILESTONE_MSGS = {
   3:  ["3-day streak. Now this is real.", "Three days. Okay, you're not quitting.", "3 in a row. Suspicious."],
   7:  ["7-day streak. Suspiciously disciplined.", "A full week. Who are you?", "Seven days straight. Respect."],
@@ -41,13 +23,28 @@ const MILESTONE_MSGS = {
 };
 
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
-
 function getStreakMsg(streak) {
   if (streak >= 10) return pick(STREAK_MSGS.high);
   if (streak >= 7)  return pick(STREAK_MSGS.good);
   if (streak >= 3)  return pick(STREAK_MSGS.mid);
   if (streak >= 1)  return pick(STREAK_MSGS.low);
   return pick(STREAK_MSGS.zero);
+}
+
+function parseDate(raw) {
+  if (!raw) return null;
+  if (Array.isArray(raw)) return new Date(raw[0], raw[1] - 1, raw[2]);
+  const s = String(raw).split('T')[0];
+  const p = s.split('-');
+  if (p.length === 3) return new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+  return null;
+}
+
+function isPeriodOver(createdDate, durationDays) {
+  const start = parseDate(createdDate);
+  if (!start) return false;
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  return Math.floor((today - start) / 86400000) >= Number(durationDays);
 }
 
 export default function HabitCard({ habit, onHideCompleted, onDelete }) {
@@ -66,9 +63,18 @@ export default function HabitCard({ habit, onHideCompleted, onDelete }) {
   const [showConfetti, setShowConfetti] = useState(false);
   const [celebrationText, setCelebrationText] = useState("");
   const [animateEmoji, setAnimateEmoji] = useState(false);
-  const [streakMsg] = useState(() => getStreakMsg(calculateStreak(buildDays(habit))));
-  const [currentStreakMsg, setCurrentStreakMsg] = useState(streakMsg);
+  const [currentStreakMsg, setCurrentStreakMsg] = useState(() => getStreakMsg(calculateStreak(buildDays(habit))));
   const previousStreakRef = useRef(calculateStreak(buildDays(habit)));
+  const removedRef = useRef(false);
+
+  // Safety net: if period is over on mount, self-remove immediately
+  useEffect(() => {
+    if (removedRef.current) return;
+    if (isPeriodOver(habit.createdDate, duration) || isFullyCompleted(buildDays(habit))) {
+      removedRef.current = true;
+      onHideCompleted(habit.id);
+    }
+  }, []);
 
   const currentDayIndex = getCurrentDayIndex(days);
   const completedCount = countCompletedDays(days);
@@ -110,8 +116,8 @@ export default function HabitCard({ habit, onHideCompleted, onDelete }) {
       setCurrentStreakMsg(getStreakMsg(newStreak));
       if (status === "DONE" && newStreak > previousStreakRef.current) handleCelebration(newStreak);
       previousStreakRef.current = newStreak;
-
       if (isFullyCompleted(updated)) {
+        removedRef.current = true;
         setShowConfetti(true);
         setCompletionNotice("You did it. Every single day. That's rare.");
         setIsHiding(true);
