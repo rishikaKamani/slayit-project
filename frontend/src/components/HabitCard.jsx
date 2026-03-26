@@ -7,6 +7,49 @@ import "./streak-polish.css";
 const MILESTONES = [3, 7, 10];
 const EMOJI = { crown: "\uD83D\uDC51", fire: "\uD83D\uDD25", muscle: "\uD83D\uDCAA", smile: "\uD83D\uDE42", grimace: "\uD83D\uDE2C", skull: "\uD83D\uDC80" };
 
+const STREAK_MSGS = {
+  high:   ["Unstoppable. Annoyingly so.", "You're showing off now.", "Okay fine, you're built different.", "This is getting suspicious.", "Double digits. Calm down."],
+  good:   ["Serious consistency. Gross.", "You're actually doing it.", "Seven days. Who even are you?", "Respect. Reluctantly.", "This is real now."],
+  mid:    ["Building momentum. Don't ruin it.", "Three days in. Don't get cocky.", "Okay, you're trying.", "Momentum rising. Barely.", "Keep going before you forget."],
+  low:    ["Started. Try not to stop.", "One day. Let's not celebrate yet.", "A start. Suspicious, but a start.", "Day one. Classic.", "Fine. You showed up."],
+  zero:   ["No momentum yet. Shocking.", "Zero streak. A bold choice.", "Nothing. Truly nothing.", "The streak is a myth right now.", "You could start. You won't. But you could."],
+};
+
+const DONE_MSGS = [
+  "Done? Nice. Bare minimum, but still nice.",
+  "Saved. Your future self is mildly impressed.",
+  "Logged. Don't expect applause.",
+  "Done. One day at a time, apparently.",
+  "Marked done. The bar was low. You cleared it.",
+  "Okay fine, you did it.",
+  "Logged. Try doing it again tomorrow.",
+];
+
+const MISSED_MSGS = [
+  "Missed it. Your future self is unimpressed.",
+  "Logged as missed. Bold strategy.",
+  "Skipped. The streak noticed.",
+  "Missed. The habit didn't miss you though.",
+  "Another miss. Interesting pattern.",
+  "Noted. Not great, not great at all.",
+];
+
+const MILESTONE_MSGS = {
+  3:  ["3-day streak. Now this is real.", "Three days. Okay, you're not quitting.", "3 in a row. Suspicious."],
+  7:  ["7-day streak. Suspiciously disciplined.", "A full week. Who are you?", "Seven days straight. Respect."],
+  10: ["10-day streak. Impressive.", "Double digits. Calm down.", "10 days. You're actually doing this."],
+};
+
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+function getStreakMsg(streak) {
+  if (streak >= 10) return pick(STREAK_MSGS.high);
+  if (streak >= 7)  return pick(STREAK_MSGS.good);
+  if (streak >= 3)  return pick(STREAK_MSGS.mid);
+  if (streak >= 1)  return pick(STREAK_MSGS.low);
+  return pick(STREAK_MSGS.zero);
+}
+
 export default function HabitCard({ habit, onHideCompleted, onDelete }) {
   const duration = Number(habit.durationDays || 1);
   const buildDays = (h) => {
@@ -23,10 +66,9 @@ export default function HabitCard({ habit, onHideCompleted, onDelete }) {
   const [showConfetti, setShowConfetti] = useState(false);
   const [celebrationText, setCelebrationText] = useState("");
   const [animateEmoji, setAnimateEmoji] = useState(false);
-  const previousStreakRef = useRef(0);
-  const onHideRef = useRef(onHideCompleted);
-
-  useEffect(() => { onHideRef.current = onHideCompleted; });
+  const [streakMsg] = useState(() => getStreakMsg(calculateStreak(buildDays(habit))));
+  const [currentStreakMsg, setCurrentStreakMsg] = useState(streakMsg);
+  const previousStreakRef = useRef(calculateStreak(buildDays(habit)));
 
   const currentDayIndex = getCurrentDayIndex(days);
   const completedCount = countCompletedDays(days);
@@ -35,7 +77,6 @@ export default function HabitCard({ habit, onHideCompleted, onDelete }) {
   const fullyDone = isFullyCompleted(days);
   const daysLeft = Math.max(duration - completedCount, 0);
 
-  const streakMsg = streak >= 10 ? "Unstoppable." : streak >= 7 ? "Serious consistency." : streak >= 3 ? "Building momentum." : streak >= 1 ? "Started. Keep going." : "No momentum yet.";
   const emojiKey = streak >= 10 ? "crown" : streak >= 7 ? "fire" : streak >= 3 ? "muscle" : streak >= 1 ? "smile" : completedCount > 0 ? "grimace" : "skull";
   const emojiText = streak >= 10 ? "Discipline mode" : streak >= 7 ? "On fire" : streak >= 3 ? "Momentum rising" : streak >= 1 ? "Getting started" : "No consistency";
 
@@ -50,43 +91,46 @@ export default function HabitCard({ habit, onHideCompleted, onDelete }) {
 
   const handleCelebration = (newStreak) => {
     if (!MILESTONES.includes(newStreak)) return;
-    const msg = newStreak === 3 ? "3-day streak! Now this is real." : newStreak === 7 ? "7-day streak. Suspiciously disciplined." : "10-day streak. Impressive.";
+    const msgs = MILESTONE_MSGS[newStreak] || [];
+    const msg = msgs.length ? pick(msgs) : `${newStreak}-day streak!`;
     setCelebrationText(msg); setShowConfetti(true); setAnimateEmoji(true);
     setTimeout(() => setShowConfetti(false), 2200);
     setTimeout(() => setAnimateEmoji(false), 900);
-  };
-
-  const triggerCompletion = (habitId) => {
-    setShowConfetti(true);
-    setCompletionNotice("You did it. Every single day. That's rare.");
-    setIsHiding(true);
-    // Remove from dashboard after short delay for animation
-    setTimeout(() => { if (onHideRef.current) onHideRef.current(habitId); }, 800);
   };
 
   const handleMark = async (status) => {
     if (saving || currentDayIndex === -1) return;
     setSaving(true);
     try {
-      const res = await api.post("/habits/" + habit.id + "/log", { status: status.toUpperCase(), dayNumber: currentDayIndex + 1 });
+      await api.post("/habits/" + habit.id + "/log", { status: status.toUpperCase(), dayNumber: currentDayIndex + 1 });
       const updated = days.map((d, i) => i === currentDayIndex ? { ...d, status: status.toLowerCase() } : d);
       const newStreak = calculateStreak(updated);
       setDays(updated);
-      setFeedback((res.data && res.data.feedback) || (status === "DONE" ? "Saved." : "Missed day saved."));
+      setFeedback(status === "DONE" ? pick(DONE_MSGS) : pick(MISSED_MSGS));
+      setCurrentStreakMsg(getStreakMsg(newStreak));
       if (status === "DONE" && newStreak > previousStreakRef.current) handleCelebration(newStreak);
       previousStreakRef.current = newStreak;
-      // If this was the last day, trigger completion immediately
+
       if (isFullyCompleted(updated)) {
-        triggerCompletion(habit.id);
+        setShowConfetti(true);
+        setCompletionNotice("You did it. Every single day. That's rare.");
+        setIsHiding(true);
+        setTimeout(() => onHideCompleted(habit.id), 800);
       }
-    } catch (err) { setFeedback((err.response && err.response.data && err.response.data.message) || "Could not save."); }
-    finally { setSaving(false); }
+    } catch (err) {
+      setFeedback((err.response && err.response.data && err.response.data.message) || "Could not save.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleDelete = async () => {
     if (!confirmDelete) { setConfirmDelete(true); setTimeout(() => setConfirmDelete(false), 3000); return; }
-    try { await api.delete("/habits/" + habit.id); setIsHiding(true); setTimeout(() => { if (onDelete) onDelete(habit.id); }, 350); }
-    catch (err) { setFeedback("Could not delete."); }
+    try {
+      await api.delete("/habits/" + habit.id);
+      setIsHiding(true);
+      setTimeout(() => onDelete(habit.id), 350);
+    } catch (err) { setFeedback("Could not delete."); }
   };
 
   const cardClass = "habit-card enhanced-habit-card" + (showConfetti ? " celebration-active" : "") + (isHiding ? " habit-card-hiding" : "");
@@ -98,7 +142,7 @@ export default function HabitCard({ habit, onHideCompleted, onDelete }) {
       {showConfetti && (
         <div className="confetti-layer" aria-hidden="true">
           {Array.from({ length: 24 }).map((_, i) => (
-            <span key={i} className="confetti-piece" style={{ left: (i * 4.1 % 100) + "%" , animationDelay: (i % 8 * 0.08) + "s" }} />
+            <span key={i} className="confetti-piece" style={{ left: (i * 4.1 % 100) + "%", animationDelay: (i % 8 * 0.08) + "s" }} />
           ))}
         </div>
       )}
@@ -137,7 +181,7 @@ export default function HabitCard({ habit, onHideCompleted, onDelete }) {
             </div>
           )}
         </div>
-        <p className="habit-message">{completionNotice || feedback || streakMsg}</p>
+        <p className="habit-message">{completionNotice || feedback || currentStreakMsg}</p>
       </div>
       <div className="streak-side-box">
         <div className="streak-pill">{streak} day streak</div>
@@ -155,7 +199,7 @@ export default function HabitCard({ habit, onHideCompleted, onDelete }) {
           <div className="pressure-line">{todayStatus === "Done" || todayStatus === "Completed" ? "Completed today" : "You haven't done this today"}</div>
           <div className="streak-warning">{todayStatus === "Done" || todayStatus === "Completed" ? "Today's entry is safe." : "Miss today - streak resets to 0"}</div>
         </div>
-        <div className="streak-roast-box">{streakMsg}</div>
+        <div className="streak-roast-box">{currentStreakMsg}</div>
       </div>
     </div>
   );
