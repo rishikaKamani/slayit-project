@@ -1126,96 +1126,155 @@ select {
   .streak-side-box .celebration-banner { flex: 1 1 100%; }
 }
 
-/* Mobile */
+/* ── Mobile (≤760px) ── */
 @media (max-width: 760px) {
   .page-shell {
-    padding: 12px;
+    padding: 12px 10px;
   }
 
   .navbar {
-    border-radius: 20px;
-    margin-bottom: 16px;
-    padding: 12px 16px;
+    border-radius: 18px;
+    margin-bottom: 14px;
+    padding: 11px 14px;
+  }
+
+  /* Dashboard */
+  .dashboard-page {
+    gap: 14px;
   }
 
   .dashboard-header {
     flex-direction: column;
-    align-items: stretch;
-    gap: 10px;
+    align-items: flex-start;
+    gap: 8px;
   }
 
   .dashboard-title {
-    font-size: 1.7rem;
+    font-size: 1.65rem;
   }
 
   .dashboard-subtitle {
-    font-size: 0.9rem;
+    font-size: 0.88rem;
+    margin-top: 4px;
   }
 
-  /* Habit card mobile */
+  /* ── Habit card: single column, clean stacked layout ── */
   .habit-card {
-    padding: 16px;
-    border-radius: 22px;
-    gap: 14px;
+    display: flex;
+    flex-direction: column;
+    padding: 16px 14px;
+    border-radius: 20px;
+    gap: 0;
+  }
+
+  /* Streak summary bar — compact horizontal strip at top */
+  .streak-side-box {
+    order: -1;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: nowrap;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 14px;
+    margin-bottom: 14px;
+    /* hide verbose items on mobile */
+  }
+
+  .streak-side-box .pressure-box,
+  .streak-side-box .streak-roast-box,
+  .streak-side-box .celebration-banner,
+  .streak-side-box .streak-metrics:not(:first-of-type) {
+    display: none;
+  }
+
+  /* Show only: streak pill + emoji box + first metric (progress) */
+  .streak-pill {
+    font-size: 0.82rem;
+    padding: 7px 10px;
+    white-space: nowrap;
+  }
+
+  .big-emoji-box {
+    padding: 8px 10px;
+    border-radius: 14px;
+    flex: 0 0 auto;
+  }
+
+  .big-emoji {
+    font-size: 1.6rem;
+    line-height: 1;
+  }
+
+  .big-emoji-text {
+    font-size: 0.7rem;
+    margin-top: 4px;
+  }
+
+  .streak-metrics {
+    font-size: 0.82rem;
+  }
+
+  .streak-metrics strong {
+    font-size: 0.95rem;
+  }
+
+  /* Main card content */
+  .habit-card-main {
+    gap: 10px;
   }
 
   .habit-card-heading h3 {
-    font-size: 1.4rem;
+    font-size: 1.3rem;
+    margin-bottom: 6px;
+  }
+
+  .habit-topline {
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+
+  .habit-category {
+    font-size: 0.75rem;
   }
 
   .habit-meta-row {
     gap: 8px;
+    flex-wrap: wrap;
   }
 
   .habit-duration {
-    font-size: 0.85rem;
-  }
-
-  /* Day bubbles — smaller on mobile */
-  .day-bubble {
-    width: 36px;
-    height: 36px;
-    border-radius: 10px;
     font-size: 0.82rem;
   }
 
+  /* Day bubbles */
   .day-bubble-row {
-    gap: 7px;
+    gap: 6px;
+    margin: 4px 0 6px;
   }
 
-  /* Streak side box — horizontal compact layout */
-  .streak-side-box {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    padding: 14px;
-    border-radius: 18px;
+  .day-bubble {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    font-size: 0.78rem;
   }
 
-  .streak-pill {
-    grid-column: 1 / -1;
-    text-align: center;
+  .habit-summary-row {
+    font-size: 0.85rem;
+    margin: 0 0 6px;
   }
 
-  .big-emoji-box {
-    grid-column: 1 / -1;
-    padding: 14px 12px;
-  }
-
-  .big-emoji {
-    font-size: 2.2rem;
-  }
-
-  .pressure-box,
-  .streak-roast-box,
-  .celebration-banner {
-    grid-column: 1 / -1;
-  }
-
-  /* Current day panel */
+  /* Action buttons — full width */
   .current-day-panel {
     padding: 12px;
-    border-radius: 16px;
+    border-radius: 14px;
+  }
+
+  .current-day-text {
+    font-size: 0.9rem;
+    margin-bottom: 10px;
   }
 
   .habit-actions {
@@ -1225,14 +1284,20 @@ select {
   .done-btn,
   .miss-btn {
     flex: 1;
-    padding: 12px 10px;
-    font-size: 0.9rem;
+    padding: 13px 8px;
+    font-size: 0.92rem;
+    border-radius: 14px;
+  }
+
+  .habit-message {
+    font-size: 0.85rem;
+    margin-top: 6px;
   }
 
   /* Form */
   .form-card {
-    padding: 20px 16px;
-    border-radius: 22px;
+    padding: 18px 14px;
+    border-radius: 20px;
   }
 
   .form-two-col {
@@ -1240,20 +1305,15 @@ select {
   }
 
   .form-heading-wrap h1 {
-    font-size: 1.6rem;
+    font-size: 1.5rem;
   }
 
-  /* Performance page table → cards */
-  .perf-table-wrap table thead {
-    display: none;
-  }
+  /* Performance table → stacked cards */
+  .perf-table-wrap table thead { display: none; }
 
   .perf-table-wrap table,
   .perf-table-wrap tbody,
-  .perf-table-wrap tr {
-    display: block;
-    width: 100%;
-  }
+  .perf-table-wrap tr { display: block; width: 100%; }
 
   .perf-table-wrap tr {
     padding: 12px 0;
@@ -1272,7 +1332,7 @@ select {
 
   .perf-table-wrap td::before {
     content: attr(data-label);
-    font-size: 0.72rem;
+    font-size: 0.7rem;
     font-weight: 800;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -1280,42 +1340,20 @@ select {
     margin-bottom: 2px;
   }
 
-  /* Coach page */
-  .coach-page {
-    padding: 16px 0 40px;
-  }
-
-  .coach-header {
-    flex-direction: column;
-    gap: 10px;
-    margin-bottom: 16px;
-  }
-
-  .coach-chat-shell {
-    height: calc(100vh - 280px);
-    min-height: 360px;
-    border-radius: 20px;
-  }
-
-  .coach-messages {
-    padding: 16px;
-  }
-
-  .coach-input-row {
-    padding: 10px 12px;
-    gap: 8px;
-  }
-
-  .coach-input {
-    font-size: 0.95rem;
-  }
+  /* Coach */
+  .coach-page { padding: 12px 0 40px; }
+  .coach-header { flex-direction: column; gap: 10px; margin-bottom: 14px; }
+  .coach-chat-shell { height: calc(100vh - 260px); min-height: 340px; border-radius: 18px; }
+  .coach-messages { padding: 14px; }
+  .coach-input-row { padding: 10px 12px; gap: 8px; }
+  .coach-input { font-size: 0.95rem; }
 
   /* History */
   .history-item {
     flex-direction: column;
     align-items: flex-start;
-    gap: 10px;
-    padding: 12px 14px;
+    gap: 8px;
+    padding: 12px 12px;
   }
 
   .history-item-right {
@@ -1325,57 +1363,52 @@ select {
   }
 
   /* Share modal */
-  .share-modal {
-    padding: 20px 16px 18px;
-    border-radius: 22px;
-  }
-
-  .share-modal-actions {
-    flex-direction: column;
-  }
+  .share-modal { padding: 18px 14px 16px; border-radius: 20px; }
+  .share-modal-actions { flex-direction: column; }
 
   /* Theme switcher */
-  .theme-switcher {
-    width: 100%;
-  }
+  .theme-switcher { width: 100%; }
+  .theme-select { width: 100%; }
 
-  .theme-select {
-    width: 100%;
+  /* Auth pages */
+  .auth-card { padding: 24px 18px 20px; border-radius: 24px; }
+  .auth-title { font-size: 1.4rem; }
+  .auth-form-grid { grid-template-columns: 1fr; }
+
+  /* Badge page */
+  .badge-shell { padding: 28px 18px 24px; }
+  .badge-title { font-size: 1.5rem; }
+  .badge-actions { flex-direction: column; }
+  .badge-btn { width: 100%; }
+
+  /* Performance stat cards */
+  .glass-card[style] {
+    border-radius: 18px !important;
   }
 }
 
-/* Small phones */
+/* ── Small phones (≤420px) ── */
 @media (max-width: 420px) {
-  .dashboard-title {
-    font-size: 1.5rem;
-  }
+  .page-shell { padding: 8px; }
 
-  .habit-card-heading h3 {
-    font-size: 1.25rem;
-  }
+  .dashboard-title { font-size: 1.45rem; }
+
+  .habit-card { padding: 12px 10px; }
+
+  .habit-card-heading h3 { font-size: 1.15rem; }
 
   .day-bubble {
-    width: 30px;
-    height: 30px;
+    width: 28px;
+    height: 28px;
     border-radius: 8px;
-    font-size: 0.72rem;
+    font-size: 0.7rem;
   }
 
-  .day-bubble-row {
-    gap: 5px;
-  }
+  .day-bubble-row { gap: 5px; }
 
-  .streak-side-box {
-    grid-template-columns: 1fr;
-  }
+  .done-btn, .miss-btn { font-size: 0.85rem; padding: 11px 6px; }
 
-  .badge-actions {
-    flex-direction: column;
-  }
-
-  .badge-btn {
-    width: 100%;
-  }
+  .streak-side-box { padding: 8px 10px; }
 }
 
 .welcome-page-minimal {
