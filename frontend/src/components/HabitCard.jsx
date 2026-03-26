@@ -26,15 +26,16 @@ export default function HabitCard({ habit, onHideCompleted, onDelete }) {
   const previousStreakRef = useRef(0);
   const habitIdRef = useRef(habit.id);
   const onHideRef = useRef(onHideCompleted);
-  const hideFiredRef = useRef(false);
+  const completionFiredRef = useRef(false);
+  const periodFiredRef = useRef(false);
 
   useEffect(() => { onHideRef.current = onHideCompleted; });
 
-  // Check on every days change — if fully done, trigger hide
   useEffect(() => {
-    if (hideFiredRef.current) return;
+    if (completionFiredRef.current) return;
     if (isFullyCompleted(days)) {
-      hideFiredRef.current = true;
+      completionFiredRef.current = true;
+      periodFiredRef.current = true;
       setShowConfetti(true);
       setCompletionNotice("You did it. Every single day. That's rare.");
       setTimeout(() => setIsHiding(true), 2200);
@@ -42,11 +43,11 @@ export default function HabitCard({ habit, onHideCompleted, onDelete }) {
     }
   }, [days]);
 
-  // Check on mount — if period is over, trigger hide
   useEffect(() => {
-    if (hideFiredRef.current) return;
-    if (!isFullyCompleted(buildDays(habit)) && isHabitPeriodOver(habit.createdDate, duration)) {
-      hideFiredRef.current = true;
+    if (periodFiredRef.current) return;
+    if (isHabitPeriodOver(habit.createdDate, duration)) {
+      periodFiredRef.current = true;
+      completionFiredRef.current = true;
       setCompletionNotice("Habit period ended. Moving to history...");
       setTimeout(() => setIsHiding(true), 2200);
       setTimeout(() => { if (onHideRef.current) onHideRef.current(habitIdRef.current); }, 2600);
@@ -111,7 +112,7 @@ export default function HabitCard({ habit, onHideCompleted, onDelete }) {
       {showConfetti && (
         <div className="confetti-layer" aria-hidden="true">
           {Array.from({ length: 24 }).map((_, i) => (
-            <span key={i} className="confetti-piece" style={{ left: (i * 4.1 % 100) + "%", animationDelay: (i % 8 * 0.08) + "s" }} />
+            <span key={i} className="confetti-piece" style={{ left: (i * 4.1 % 100) + "%" , animationDelay: (i % 8 * 0.08) + "s" }} />
           ))}
         </div>
       )}
