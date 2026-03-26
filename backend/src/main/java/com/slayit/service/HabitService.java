@@ -261,7 +261,7 @@ public class HabitService {
         response.setDurationDays(habit.getDurationDays());
         response.setCurrentStreak(habit.getCurrentStreak());
         response.setLongestStreak(habit.getLongestStreak());
-        response.setCreatedDate(habit.getCreatedDate());
+        response.setCreatedDate(habit.getCreatedDate().toString());
 
         response.setTimeBound(habit.isTimeBound());
         response.setTargetTime(habit.getTargetTime() != null ? habit.getTargetTime().toString() : null);

@@ -25,11 +25,7 @@ function addToHistory(prev, habit, type) {
 
 function parseCreatedDate(createdDate) {
   if (!createdDate) return null;
-  // Handle array format [2026, 3, 25] from Java LocalDate without JavaTime module
-  if (Array.isArray(createdDate)) {
-    return new Date(createdDate[0], createdDate[1] - 1, createdDate[2]);
-  }
-  // Handle string format "2026-03-25" or "2026-03-25T00:00:00"
+  // Always a "yyyy-MM-dd" string from backend
   const parts = String(createdDate).split('T')[0].split('-');
   return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
 }
