@@ -1,123 +1,217 @@
-// Generates a shareable streak card as a PNG using Canvas
-
-const BG_THEMES = [
-  { from: '#f9e4f5', to: '#e8d4fb', bar0: '#f08ac0', bar1: '#d784f7', pill: 'rgba(240,138,192,0.18)', pillText: '#c060a0' },
-  { from: '#d4f0fb', to: '#d4e8fb', bar0: '#38bdf8', bar1: '#818cf8', pill: 'rgba(56,189,248,0.18)', pillText: '#0369a1' },
-  { from: '#d4fbe8', to: '#d4fbf0', bar0: '#34d399', bar1: '#10b981', pill: 'rgba(52,211,153,0.18)', pillText: '#065f46' },
-  { from: '#fef3c7', to: '#fde68a', bar0: '#fbbf24', bar1: '#f59e0b', pill: 'rgba(251,191,36,0.18)', pillText: '#92400e' },
-  { from: '#ffe4e6', to: '#fecdd3', bar0: '#fb7185', bar1: '#f43f5e', pill: 'rgba(251,113,133,0.18)', pillText: '#9f1239' },
+// Streak-tier config: emoji, label, colors
+const TIERS = [
+  {
+    min: 30,
+    emoji: '🏆',
+    label: '30-DAY LEGEND',
+    msg: "Thirty days. You're built different.",
+    bg1: '#1a0a00', bg2: '#3d1a00', accent1: '#fbbf24', accent2: '#f97316',
+    sub: '#fde68a',
+  },
+  {
+    min: 21,
+    emoji: '👑',
+    label: '3-WEEK KING',
+    msg: "Three weeks straight. Annoyingly impressive.",
+    bg1: '#0d0a1a', bg2: '#1e1040', accent1: '#a78bfa', accent2: '#7c3aed',
+    sub: '#ddd6fe',
+  },
+  {
+    min: 14,
+    emoji: '🔥',
+    label: '2-WEEK BEAST',
+    msg: "Two weeks. The streak is real now.",
+    bg1: '#1a0a00', bg2: '#3d1500', accent1: '#fb923c', accent2: '#ef4444',
+    sub: '#fed7aa',
+  },
+  {
+    min: 10,
+    emoji: '⚡',
+    label: '10-DAY STREAK',
+    msg: "Double digits. Calm down.",
+    bg1: '#0a1628', bg2: '#0f2d4a', accent1: '#38bdf8', accent2: '#818cf8',
+    sub: '#bae6fd',
+  },
+  {
+    min: 7,
+    emoji: '💪',
+    label: '7-DAY STREAK',
+    msg: "A full week. Who even are you?",
+    bg1: '#0d2818', bg2: '#0f3d22', accent1: '#34d399', accent2: '#10b981',
+    sub: '#a7f3d0',
+  },
+  {
+    min: 3,
+    emoji: '🙂',
+    label: '3-DAY STREAK',
+    msg: "Three days in. Don't get cocky.",
+    bg1: '#1a0533', bg2: '#3d0f6b', accent1: '#f08ac0', accent2: '#d784f7',
+    sub: '#e0b8f5',
+  },
+  {
+    min: 1,
+    emoji: '🌱',
+    label: 'GETTING STARTED',
+    msg: "Day one. Let's not celebrate yet.",
+    bg1: '#0d2818', bg2: '#1a3d22', accent1: '#86efac', accent2: '#4ade80',
+    sub: '#bbf7d0',
+  },
+  {
+    min: 0,
+    emoji: '💀',
+    label: 'NO STREAK',
+    msg: "Zero streak. A bold choice.",
+    bg1: '#1a1a1a', bg2: '#2d2d2d', accent1: '#9ca3af', accent2: '#6b7280',
+    sub: '#d1d5db',
+  },
 ];
 
-const VIBE_EMOJIS = [
-  ['🔥','💀','👑','💅','🫡'],
-  ['⚡','🧠','💪','🎯','🏆'],
-  ['✨','🌟','💫','🎉','🥳'],
-  ['😤','😈','🤌','💯','🫶'],
-  ['🚀','🌈','🦋','🎪','🎭'],
-];
+function getTier(streak) {
+  return TIERS.find((t) => streak >= t.min) || TIERS[TIERS.length - 1];
+}
 
-function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function rr(c, x, y, w, h, r) {
+  c.beginPath();
+  c.moveTo(x + r, y);
+  c.lineTo(x + w - r, y);
+  c.quadraticCurveTo(x + w, y, x + w, y + r);
+  c.lineTo(x + w, y + h - r);
+  c.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  c.lineTo(x + r, y + h);
+  c.quadraticCurveTo(x, y + h, x, y + h - r);
+  c.lineTo(x, y + r);
+  c.quadraticCurveTo(x, y, x + r, y);
+  c.closePath();
+}
 
 export function generateShareCard({ habitName, streak, completed, total, category }) {
-  const W = 600, H = 360;
+  const W = 640, H = 380;
   const canvas = document.createElement('canvas');
-  canvas.width = W; canvas.height = H;
+  canvas.width = W * 2; canvas.height = H * 2;
   const c = canvas.getContext('2d');
+  c.scale(2, 2);
 
-  // Pick random theme and emoji set
-  const theme = pick(BG_THEMES);
-  const emojis = pick(VIBE_EMOJIS);
+  const tier = getTier(streak);
 
   // Background gradient
-  const bg = c.createLinearGradient(0, 0, W, H);
-  bg.addColorStop(0, theme.from);
-  bg.addColorStop(1, theme.to);
-  c.fillStyle = bg;
-  c.roundRect(0, 0, W, H, 28);
+  const bgGrad = c.createLinearGradient(0, 0, W, H);
+  bgGrad.addColorStop(0, tier.bg1);
+  bgGrad.addColorStop(1, tier.bg2);
+  c.fillStyle = bgGrad;
+  rr(c, 0, 0, W, H, 28);
   c.fill();
 
-  // Accent bar top
-  const bar = c.createLinearGradient(0, 0, W, 0);
-  bar.addColorStop(0, theme.bar0);
-  bar.addColorStop(1, theme.bar1);
-  c.fillStyle = bar;
-  c.roundRect(0, 0, W, 8, [28, 28, 0, 0]);
+  // Glow blobs
+  const g1 = c.createRadialGradient(W * 0.15, H * 0.25, 0, W * 0.15, H * 0.25, 200);
+  g1.addColorStop(0, tier.accent1 + '40');
+  g1.addColorStop(1, 'transparent');
+  c.fillStyle = g1; c.fillRect(0, 0, W, H);
+
+  const g2 = c.createRadialGradient(W * 0.85, H * 0.75, 0, W * 0.85, H * 0.75, 180);
+  g2.addColorStop(0, tier.accent2 + '40');
+  g2.addColorStop(1, 'transparent');
+  c.fillStyle = g2; c.fillRect(0, 0, W, H);
+
+  // Top accent bar
+  const lineGrad = c.createLinearGradient(0, 0, W, 0);
+  lineGrad.addColorStop(0, tier.accent1);
+  lineGrad.addColorStop(1, tier.accent2);
+  c.fillStyle = lineGrad;
+  rr(c, 0, 0, W, 6, 0); c.fill();
+
+  // ── BIG EMOJI (right side, centered vertically) ──
+  c.font = '130px serif';
+  c.textAlign = 'center';
+  c.fillText(tier.emoji, W - 110, H / 2 + 50);
+
+  // Subtle ring behind emoji
+  c.beginPath();
+  c.arc(W - 110, H / 2 + 10, 90, 0, Math.PI * 2);
+  c.fillStyle = 'rgba(255,255,255,0.05)';
   c.fill();
 
-  // Scattered background emojis (faint)
-  c.globalAlpha = 0.07;
-  c.font = '48px serif';
-  [[60,80],[180,260],[420,60],[500,200],[300,310],[140,140],[480,310]].forEach(([x,y], i) => {
-    c.fillText(emojis[i % emojis.length], x, y);
-  });
-  c.globalAlpha = 1;
+  // ── LEFT CONTENT ──
 
   // Category pill
-  c.fillStyle = theme.pill;
-  c.roundRect(32, 28, 120, 30, 999);
-  c.fill();
-  c.fillStyle = theme.pillText;
-  c.font = 'bold 12px Inter, sans-serif';
+  c.fillStyle = 'rgba(255,255,255,0.12)';
+  rr(c, 28, 22, 110, 28, 14); c.fill();
+  c.fillStyle = tier.sub;
+  c.font = 'bold 11px Arial, sans-serif';
   c.textAlign = 'center';
-  c.fillText((category || 'HABIT').toUpperCase(), 92, 48);
+  c.fillText((category || 'HABIT').toUpperCase(), 83, 40);
+
+  // Slayit wordmark
+  c.fillStyle = 'rgba(255,255,255,0.22)';
+  c.font = 'bold 14px Arial, sans-serif';
+  c.textAlign = 'right';
+  c.fillText('slayit', W - 24, 40);
 
   // Habit name
-  c.fillStyle = '#1e1428';
-  c.font = 'bold 34px Inter, sans-serif';
+  c.fillStyle = '#ffffff';
+  c.font = 'bold 28px Arial, sans-serif';
   c.textAlign = 'left';
   const name = habitName.length > 24 ? habitName.slice(0, 24) + '…' : habitName;
-  c.fillText(name, 32, 108);
+  c.fillText(name, 28, 88);
+
+  // Divider
+  const divGrad = c.createLinearGradient(28, 0, 320, 0);
+  divGrad.addColorStop(0, tier.accent1 + 'cc');
+  divGrad.addColorStop(1, 'transparent');
+  c.fillStyle = divGrad;
+  c.fillRect(28, 98, 300, 2);
 
   // Big streak number
-  const streakGrad = c.createLinearGradient(32, 130, 220, 240);
-  streakGrad.addColorStop(0, theme.bar0);
-  streakGrad.addColorStop(1, theme.bar1);
-  c.fillStyle = streakGrad;
-  c.font = 'bold 100px Inter, sans-serif';
-  c.fillText(streak, 32, 240);
+  const numGrad = c.createLinearGradient(28, 110, 28, 240);
+  numGrad.addColorStop(0, tier.accent1);
+  numGrad.addColorStop(1, tier.accent2);
+  c.fillStyle = numGrad;
+  c.font = 'bold 120px Arial, sans-serif';
+  c.textAlign = 'left';
+  c.fillText(String(streak), 18, 240);
 
-  // "day streak" label
-  c.fillStyle = '#6b5878';
-  c.font = 'bold 20px Inter, sans-serif';
-  c.fillText('day streak', 32, 270);
+  // "DAY STREAK" label
+  c.fillStyle = tier.sub;
+  c.font = 'bold 15px Arial, sans-serif';
+  c.fillText('DAY STREAK', 28, 264);
 
-  // Big main emoji top right
-  c.font = '72px serif';
-  c.textAlign = 'right';
-  const mainEmoji = streak >= 10 ? '👑' : streak >= 7 ? '🔥' : streak >= 3 ? '💪' : streak >= 1 ? '😤' : '💀';
-  c.fillText(mainEmoji, W - 28, 200);
+  // Tier label badge
+  c.fillStyle = 'rgba(255,255,255,0.1)';
+  rr(c, 28, 274, 180, 26, 13); c.fill();
+  c.fillStyle = tier.accent1;
+  c.font = 'bold 11px Arial, sans-serif';
+  c.textAlign = 'center';
+  c.fillText(tier.label, 118, 291);
 
-  // Random side emojis
-  c.font = '32px serif';
-  c.fillText(emojis[1], W - 80, 240);
-  c.fillText(emojis[2], W - 130, 270);
+  // Tier message
+  c.fillStyle = 'rgba(255,255,255,0.55)';
+  c.font = '12px Arial, sans-serif';
+  c.textAlign = 'left';
+  c.fillText(tier.msg, 28, 318);
 
   // Progress bar
-  const barX = 32, barY = 300, barW = W - 64, barH = 16;
-  c.fillStyle = 'rgba(180,160,200,0.25)';
-  c.roundRect(barX, barY, barW, barH, 999);
-  c.fill();
+  const barX = 28, barY = 336, barW = W * 0.58, barH = 10;
+  c.fillStyle = 'rgba(255,255,255,0.12)';
+  rr(c, barX, barY, barW, barH, 5); c.fill();
+
   const pct = total > 0 ? Math.min(completed / total, 1) : 0;
-  const fillGrad = c.createLinearGradient(barX, 0, barX + barW, 0);
-  fillGrad.addColorStop(0, theme.bar0);
-  fillGrad.addColorStop(1, theme.bar1);
-  c.fillStyle = fillGrad;
   if (pct > 0) {
-    c.roundRect(barX, barY, barW * pct, barH, 999);
-    c.fill();
+    const fillGrad = c.createLinearGradient(barX, 0, barX + barW, 0);
+    fillGrad.addColorStop(0, tier.accent1);
+    fillGrad.addColorStop(1, tier.accent2);
+    c.fillStyle = fillGrad;
+    rr(c, barX, barY, barW * pct, barH, 5); c.fill();
   }
 
-  // Progress label
-  c.fillStyle = '#6b5878';
-  c.font = 'bold 13px Inter, sans-serif';
-  c.textAlign = 'right';
-  c.fillText(`${completed}/${total} days done`, W - 32, barY - 6);
-
-  // Branding bottom left
-  c.fillStyle = 'rgba(100,80,120,0.45)';
-  c.font = 'bold 13px Inter, sans-serif';
+  // Progress text
+  c.fillStyle = tier.sub;
+  c.font = 'bold 11px Arial, sans-serif';
   c.textAlign = 'left';
-  c.fillText('slayit.vercel.app', 32, H - 14);
+  c.fillText(`${completed}/${total} days  •  ${Math.round(pct * 100)}%`, barX, barY - 7);
+
+  // Bottom branding
+  c.fillStyle = 'rgba(255,255,255,0.25)';
+  c.font = '10px Arial, sans-serif';
+  c.fillText('slayit.vercel.app', barX, H - 10);
 
   return canvas.toDataURL('image/png');
 }
@@ -129,8 +223,19 @@ export function downloadShareCard(dataUrl, habitName) {
   a.click();
 }
 
+export function getShareableLink({ habitName, streak, completed, total, category }) {
+  const base = window.location.origin;
+  const params = new URLSearchParams({
+    habit: habitName,
+    streak: String(streak),
+    completed: String(completed),
+    total: String(total),
+    category: category || '',
+  });
+  return `${base}/badge?${params.toString()}`;
+}
+
 export async function shareCard(dataUrl, habitName, streak) {
-  // Try Web Share API with file first (mobile)
   if (navigator.canShare) {
     try {
       const res = await fetch(dataUrl);
@@ -139,16 +244,16 @@ export async function shareCard(dataUrl, habitName, streak) {
       if (navigator.canShare({ files: [file] })) {
         await navigator.share({
           title: `${habitName} — ${streak} day streak 🔥`,
-          text: `I'm on a ${streak}-day streak for "${habitName}" on Slayit. Can you keep up?`,
+          text: `I'm on a ${streak}-day streak for "${habitName}" on Slayit. Can you keep up? 👀`,
+          url: 'https://slayit-project.vercel.app',
           files: [file],
         });
         return 'shared';
       }
     } catch (_) {}
   }
-  // Fallback: copy link to clipboard
   try {
-    const text = `I'm on a ${streak}-day streak for "${habitName}" on Slayit 🔥\nTrack your habits: https://slayit-project.vercel.app`;
+    const text = `🔥 ${streak}-day streak on "${habitName}"\nTracking habits on Slayit 💅\nhttps://slayit-project.vercel.app`;
     await navigator.clipboard.writeText(text);
     return 'copied';
   } catch (_) {}

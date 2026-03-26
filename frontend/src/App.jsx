@@ -7,6 +7,7 @@ import AddHabitPage from './pages/AddHabitPage';
 import PerformancePage from './pages/PerformancePage';
 import HistoryPage from './pages/HistoryPage';
 import CoachPage from './pages/CoachPage';
+import BadgePage from './pages/BadgePage';
 import ProtectedRoute from './components/ProtectedRoute';
 
 export default function App() {
@@ -61,6 +62,7 @@ export default function App() {
         }
       />
 
+      <Route path="/badge" element={<BadgePage />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

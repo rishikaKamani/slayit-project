@@ -9,10 +9,19 @@ const THEMES = [
   { value: 'matcha', label: 'Matcha' }
 ];
 
+const NAV_LINKS = [
+  { to: '/dashboard', label: 'Dashboard' },
+  { to: '/add-habit', label: 'New Habit' },
+  { to: '/performance', label: 'Performance' },
+  { to: '/history', label: 'History' },
+  { to: '/coach', label: 'Coach' },
+];
+
 export default function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem('slayit_theme') || 'blush';
@@ -22,6 +31,9 @@ export default function Navbar() {
     document.body.setAttribute('data-theme', theme);
     localStorage.setItem('slayit_theme', theme);
   }, [theme]);
+
+  // Close menu on route change
+  useEffect(() => { setMenuOpen(false); }, [location.pathname]);
 
   const handleLogout = () => {
     logout();
@@ -33,6 +45,7 @@ export default function Navbar() {
 
   return (
     <nav className="navbar glass-card">
+      {/* Brand */}
       <Link to="/dashboard" className="brand brand-with-logo">
         <Logo />
         <div className="brand-copy">
@@ -41,29 +54,17 @@ export default function Navbar() {
         </div>
       </Link>
 
-      <div className="nav-links">
-        <Link to="/dashboard" className={location.pathname === '/dashboard' ? 'nav-active' : ''}>
-          Dashboard
-        </Link>
-
-        <Link to="/add-habit" className={location.pathname === '/add-habit' ? 'nav-active' : ''}>
-          New Habit
-        </Link>
-
-        <Link to="/performance" className={location.pathname === '/performance' ? 'nav-active' : ''}>
-          Performance
-        </Link>
-
-        <Link to="/history" className={location.pathname === '/history' ? 'nav-active' : ''}>
-          History
-        </Link>
-
-        <Link to="/coach" className={location.pathname === '/coach' ? 'nav-active' : ''}>
-          Coach
-        </Link>
+      {/* Desktop nav links */}
+      <div className="nav-links nav-links-desktop">
+        {NAV_LINKS.map(({ to, label }) => (
+          <Link key={to} to={to} className={location.pathname === to ? 'nav-active' : ''}>
+            {label}
+          </Link>
+        ))}
       </div>
 
-      <div className="nav-actions">
+      {/* Desktop actions */}
+      <div className="nav-actions nav-actions-desktop">
         <div className="theme-switcher">
           <label className="theme-label" htmlFor="theme-select">Theme</label>
           <select
@@ -73,9 +74,7 @@ export default function Navbar() {
             onChange={(e) => setTheme(e.target.value)}
           >
             {THEMES.map((item) => (
-              <option key={item.value} value={item.value}>
-                {item.label}
-              </option>
+              <option key={item.value} value={item.value}>{item.label}</option>
             ))}
           </select>
         </div>
@@ -88,10 +87,54 @@ export default function Navbar() {
           </div>
         </div>
 
-        <button className="ghost-btn" onClick={handleLogout}>
-          Logout
+        <button className="ghost-btn" onClick={handleLogout}>Logout</button>
+      </div>
+
+      {/* Mobile right side: avatar + hamburger */}
+      <div className="nav-mobile-right">
+        <div className="avatar-circle avatar-circle-sm">{initial}</div>
+        <button
+          className="hamburger-btn"
+          onClick={() => setMenuOpen((o) => !o)}
+          aria-label="Toggle menu"
+          aria-expanded={menuOpen}
+        >
+          <span className={`ham-line ${menuOpen ? 'ham-open' : ''}`} />
+          <span className={`ham-line ${menuOpen ? 'ham-open' : ''}`} />
+          <span className={`ham-line ${menuOpen ? 'ham-open' : ''}`} />
         </button>
       </div>
+
+      {/* Mobile drawer */}
+      {menuOpen && (
+        <div className="mobile-drawer glass-card">
+          <div className="mobile-drawer-links">
+            {NAV_LINKS.map(({ to, label }) => (
+              <Link
+                key={to}
+                to={to}
+                className={`mobile-nav-link ${location.pathname === to ? 'nav-active' : ''}`}
+              >
+                {label}
+              </Link>
+            ))}
+          </div>
+          <div className="mobile-drawer-footer">
+            <select
+              className="theme-select"
+              value={theme}
+              onChange={(e) => setTheme(e.target.value)}
+            >
+              {THEMES.map((item) => (
+                <option key={item.value} value={item.value}>{item.label}</option>
+              ))}
+            </select>
+            <button className="ghost-btn" style={{ width: '100%' }} onClick={handleLogout}>
+              Logout
+            </button>
+          </div>
+        </div>
+      )}
     </nav>
   );
 }

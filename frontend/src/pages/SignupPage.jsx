@@ -1,7 +1,14 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Logo from '../components/Logo';
+import api from '../api/client';
+
+const WAKE_MESSAGES = [
+  { after: 4,  text: "Waking up the server... (Render free tier, give it a sec)" },
+  { after: 10, text: "Still loading — the server was asleep. Almost there." },
+  { after: 20, text: "Taking longer than usual. Hang tight, it'll connect." },
+];
 
 export default function SignupPage() {
   const navigate = useNavigate();
@@ -9,16 +16,33 @@ export default function SignupPage() {
   const [form, setForm] = useState({ name: '', email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+  const [wakeMsg, setWakeMsg] = useState('');
 
-  const handleChange = (event) => {
-    setForm((prev) => ({ ...prev, [event.target.name]: event.target.value }));
+  useEffect(() => {
+    api.get('/auth/ping').catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (!loading) { setElapsed(0); setWakeMsg(''); return; }
+    const interval = setInterval(() => setElapsed((s) => s + 1), 1000);
+    return () => clearInterval(interval);
+  }, [loading]);
+
+  useEffect(() => {
+    if (!loading) return;
+    const match = [...WAKE_MESSAGES].reverse().find((m) => elapsed >= m.after);
+    setWakeMsg(match ? match.text : '');
+  }, [elapsed, loading]);
+
+  const handleChange = (e) => {
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     setLoading(true);
     setError('');
-
     try {
       await signup(form);
       navigate('/dashboard');
@@ -64,7 +88,6 @@ export default function SignupPage() {
                 required
               />
             </div>
-
             <div className="auth-field">
               <label htmlFor="email">Email</label>
               <input
@@ -77,7 +100,6 @@ export default function SignupPage() {
                 required
               />
             </div>
-
             <div className="auth-field auth-field-full">
               <label htmlFor="password">Password</label>
               <input
@@ -96,8 +118,17 @@ export default function SignupPage() {
           {error && <p className="auth-error">{error}</p>}
 
           <button className="auth-submit-btn" disabled={loading}>
-            {loading ? 'Creating...' : 'Sign Up'}
+            {loading ? (
+              <span className="auth-loading-row">
+                <span className="auth-spinner" />
+                Creating account{elapsed > 0 ? ` (${elapsed}s)` : '...'}
+              </span>
+            ) : 'Sign Up'}
           </button>
+
+          {wakeMsg && (
+            <p className="auth-wake-msg">{wakeMsg}</p>
+          )}
 
           <p className="auth-footer-text center-text">
             Already have an account? <Link to="/login" className="auth-link">Login</Link>

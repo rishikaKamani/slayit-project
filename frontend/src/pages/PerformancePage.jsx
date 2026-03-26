@@ -120,7 +120,7 @@ export default function PerformancePage() {
             <div className="glass-card" style={{ padding: '24px', borderRadius: '24px' }}>
               <h3 style={{ marginBottom: '18px' }}>Habit-wise Score</h3>
 
-              <div style={{ overflowX: 'auto' }}>
+            <div style={{ overflowX: 'auto' }} className="perf-table-wrap">
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <thead>
                     <tr style={{ textAlign: 'left' }}>
@@ -138,16 +138,16 @@ export default function PerformancePage() {
                         key={habit.habitId}
                         style={{ borderTop: '1px solid rgba(80, 50, 90, 0.08)' }}
                       >
-                        <td style={{ padding: '14px 10px', fontWeight: 600 }}>
+                        <td data-label="Habit" style={{ padding: '14px 10px', fontWeight: 600 }}>
                           {habit.habitName}
                         </td>
-                        <td style={{ padding: '14px 10px' }}>{habit.category}</td>
-                        <td style={{ padding: '14px 10px' }}>{habit.completedDays}</td>
-                        <td style={{ padding: '14px 10px' }}>{habit.targetDays}</td>
-                        <td style={{ padding: '14px 10px', fontWeight: 700 }}>
+                        <td data-label="Category" style={{ padding: '14px 10px' }}>{habit.category}</td>
+                        <td data-label="Completed" style={{ padding: '14px 10px' }}>{habit.completedDays}</td>
+                        <td data-label="Target" style={{ padding: '14px 10px' }}>{habit.targetDays}</td>
+                        <td data-label="Score" style={{ padding: '14px 10px', fontWeight: 700 }}>
                           {habit.scorePercentage}% {getScoreEmoji(habit.scorePercentage)}
                         </td>
-                        <td style={{ padding: '14px 10px' }}>
+                        <td data-label="Mood" style={{ padding: '14px 10px' }}>
                           {getScoreMessage(habit.scorePercentage)}
                         </td>
                       </tr>

@@ -3,11 +3,11 @@ import api from "../api/client";
 import DayBubbleRow from "./DayBubbleRow";
 import { calculateStreak, countCompletedDays, getCurrentDayIndex, isFullyCompleted } from "../utils/streak";
 import { playDone, playMiss, playMilestone, playSlay } from "../utils/sounds";
-import { generateShareCard, downloadShareCard } from "../utils/shareCard";
+import { generateShareCard, downloadShareCard, shareCard } from "../utils/shareCard";
 import "./streak-polish.css";
 
 const MILESTONES = [3, 7, 10];
-const EMOJI = { crown: "\uD83D\uDC51", fire: "\uD83D\uDD25", muscle: "\uD83D\uDCAA", smile: "\uD83D\uDE42", grimace: "\uD83D\uDE2C", skull: "\uD83D\uDC80" };
+const EMOJI = { crown: "👑", fire: "🔥", muscle: "💪", smile: "🙂", grimace: "😬", skull: "💀" };
 
 const STREAK_MSGS = {
   high: ["Unstoppable. Annoyingly so.", "You're showing off now.", "Okay fine, you're built different.", "This is getting suspicious.", "Double digits. Calm down."],
@@ -35,8 +35,8 @@ function getStreakMsg(streak) {
 function parseDate(raw) {
   if (!raw) return null;
   if (Array.isArray(raw)) return new Date(raw[0], raw[1] - 1, raw[2]);
-  const s = String(raw).split('T')[0];
-  const p = s.split('-');
+  const s = String(raw).split("T")[0];
+  const p = s.split("-");
   if (p.length === 3) return new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
   return null;
 }
@@ -65,6 +65,7 @@ export default function HabitCard({ habit, onHideCompleted, onDelete }) {
   const [animateEmoji, setAnimateEmoji] = useState(false);
   const [currentStreakMsg, setCurrentStreakMsg] = useState(() => getStreakMsg(calculateStreak(buildDays(habit))));
   const [sharePreview, setSharePreview] = useState(null);
+  const [shareCopied, setShareCopied] = useState(false);
   const previousStreakRef = useRef(calculateStreak(buildDays(habit)));
   const removedRef = useRef(false);
 
@@ -99,7 +100,7 @@ export default function HabitCard({ habit, onHideCompleted, onDelete }) {
     if (!MILESTONES.includes(newStreak)) return;
     playMilestone();
     const msgs = MILESTONE_MSGS[newStreak] || [];
-    const msg = msgs.length ? pick(msgs) : `${newStreak}-day streak!`;
+    const msg = msgs.length ? pick(msgs) : (newStreak + "-day streak!");
     setCelebrationText(msg); setShowConfetti(true); setAnimateEmoji(true);
     setTimeout(() => setShowConfetti(false), 2200);
     setTimeout(() => setAnimateEmoji(false), 900);
@@ -147,14 +148,16 @@ export default function HabitCard({ habit, onHideCompleted, onDelete }) {
   };
 
   const handleShare = () => {
-    const dataUrl = generateShareCard({
-      habitName: habit.name,
-      streak,
-      completed: completedCount,
-      total: duration,
-      category: habit.category,
-    });
+    const dataUrl = generateShareCard({ habitName: habit.name, streak, completed: completedCount, total: duration, category: habit.category });
     setSharePreview(dataUrl);
+  };
+
+  const handleShareLink = async () => {
+    const result = await shareCard(sharePreview, habit.name, streak);
+    if (result === "copied" || result === "shared") {
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2500);
+    }
   };
 
   const cardClass = "habit-card enhanced-habit-card" + (showConfetti ? " celebration-active" : "") + (isHiding ? " habit-card-hiding" : "");
@@ -174,11 +177,17 @@ export default function HabitCard({ habit, onHideCompleted, onDelete }) {
       {sharePreview && (
         <div className="share-modal-overlay" onClick={() => setSharePreview(null)}>
           <div className="share-modal" onClick={(e) => e.stopPropagation()}>
-            <p className="share-modal-title">Your streak card 🔥</p>
+            <div className="share-modal-header">
+              <p className="share-modal-title">Your streak card 🔥</p>
+              <button className="share-x-btn" onClick={() => setSharePreview(null)}>x</button>
+            </div>
             <img src={sharePreview} alt="streak card" className="share-preview-img" />
+            <p className="share-modal-hint">Flex this. You earned it.</p>
             <div className="share-modal-actions">
               <button className="share-download-btn" onClick={() => downloadShareCard(sharePreview, habit.name)}>Download</button>
-              <button className="share-close-btn" onClick={() => setSharePreview(null)}>Close</button>
+              <button className="share-link-btn" onClick={handleShareLink}>
+                {shareCopied ? "Copied!" : "Share Link"}
+              </button>
             </div>
           </div>
         </div>
@@ -199,7 +208,7 @@ export default function HabitCard({ habit, onHideCompleted, onDelete }) {
             <div className="habit-meta-row">
               <p className="habit-duration">{duration} day goal</p>
               <p className="habit-duration">{habit.timeBound && habit.targetTime ? "Target: " + habit.targetTime : "Complete anytime"}</p>
-              <button className="share-streak-btn" onClick={handleShare} title="Share streak">Share 🔗</button>
+              <button className="share-streak-btn" onClick={handleShare}>Share</button>
               <button className={delClass} onClick={handleDelete}>{confirmDelete ? "Sure? Click again" : "Delete"}</button>
             </div>
           </div>
