@@ -1,5 +1,6 @@
 package com.slayit.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.slayit.model.HabitStatus;
 import java.time.LocalDate;
 import java.util.List;
@@ -16,6 +17,7 @@ public class HabitResponse {
     private HabitStatus todayStatus;
     private String rewardMessage;
     private List<HabitDayResponse> days;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDate createdDate;
 
     private Boolean timeBound;

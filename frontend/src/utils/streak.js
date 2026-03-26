@@ -40,9 +40,14 @@ export function isFullyCompleted(days) {
 // True when the habit's duration window has passed (based on createdDate)
 export function isHabitPeriodOver(createdDate, durationDays) {
   if (!createdDate) return false;
-  // Parse as local date to avoid UTC offset issues
-  const parts = String(createdDate).split('T')[0].split('-');
-  const start = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+  let start;
+  // Handle array format [2026, 3, 25] from Java LocalDate
+  if (Array.isArray(createdDate)) {
+    start = new Date(createdDate[0], createdDate[1] - 1, createdDate[2]);
+  } else {
+    const parts = String(createdDate).split('T')[0].split('-');
+    start = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+  }
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const daysPassed = Math.floor((today - start) / (1000 * 60 * 60 * 24));

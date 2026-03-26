@@ -23,10 +23,20 @@ function addToHistory(prev, habit, type) {
   ];
 }
 
+function parseCreatedDate(createdDate) {
+  if (!createdDate) return null;
+  // Handle array format [2026, 3, 25] from Java LocalDate without JavaTime module
+  if (Array.isArray(createdDate)) {
+    return new Date(createdDate[0], createdDate[1] - 1, createdDate[2]);
+  }
+  // Handle string format "2026-03-25" or "2026-03-25T00:00:00"
+  const parts = String(createdDate).split('T')[0].split('-');
+  return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+}
+
 function isPeriodOver(h) {
-  if (!h.createdDate) return false;
-  const parts = String(h.createdDate).split('T')[0].split('-');
-  const start = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+  const start = parseCreatedDate(h.createdDate);
+  if (!start) return false;
   const today = new Date(); today.setHours(0, 0, 0, 0);
   return Math.floor((today - start) / 86400000) >= h.durationDays;
 }
@@ -153,3 +163,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+
