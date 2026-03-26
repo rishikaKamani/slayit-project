@@ -1,4 +1,4 @@
-﻿package com.slayit.dto;
+package com.slayit.dto;
 
 import com.slayit.model.HabitStatus;
 import java.util.List;
