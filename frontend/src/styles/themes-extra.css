@@ -53,6 +53,7 @@ body[data-theme="sunset"] {
   --input-focus: rgba(249, 115, 22, 0.9);
   --input-focus-ring: rgba(253, 186, 116, 0.4);
   --error: #dc2626;
+  --error-bg: rgba(220, 38, 38, 0.08);
 }
 
 body[data-theme="ocean"] {
@@ -108,6 +109,7 @@ body[data-theme="ocean"] {
   --input-focus: rgba(14, 165, 233, 0.9);
   --input-focus-ring: rgba(186, 230, 253, 0.45);
   --error: #dc2626;
+  --error-bg: rgba(220, 38, 38, 0.08);
 }
 
 body[data-theme="lavender"] {
@@ -163,6 +165,7 @@ body[data-theme="lavender"] {
   --input-focus: rgba(168, 85, 247, 0.9);
   --input-focus-ring: rgba(221, 214, 254, 0.45);
   --error: #be185d;
+  --error-bg: rgba(190, 24, 93, 0.08);
 }
 
 body[data-theme="darkpro"] {
@@ -218,6 +221,7 @@ body[data-theme="darkpro"] {
   --input-focus: rgba(0, 255, 136, 0.8);
   --input-focus-ring: rgba(0, 255, 136, 0.15);
   --error: #ff4466;
+  --error-bg: rgba(255, 68, 102, 0.1);
 }
 
 body[data-theme="peach"] {
@@ -273,6 +277,7 @@ body[data-theme="peach"] {
   --input-focus: rgba(249, 115, 22, 0.85);
   --input-focus-ring: rgba(253, 186, 116, 0.4);
   --error: #dc2626;
+  --error-bg: rgba(220, 38, 38, 0.08);
 }
 
 body[data-theme="royal"] {
@@ -328,6 +333,7 @@ body[data-theme="royal"] {
   --input-focus: rgba(168, 85, 247, 0.9);
   --input-focus-ring: rgba(120, 60, 200, 0.25);
   --error: #f87171;
+  --error-bg: rgba(248, 113, 113, 0.1);
 }
 
 body[data-theme="minimal"] {
@@ -383,6 +389,7 @@ body[data-theme="minimal"] {
   --input-focus: rgba(100, 116, 139, 0.9);
   --input-focus-ring: rgba(203, 213, 225, 0.5);
   --error: #dc2626;
+  --error-bg: rgba(220, 38, 38, 0.08);
 }
 
 /* ══════════════════════════════════════════════
@@ -393,6 +400,7 @@ body[data-theme="minimal"] {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 8px;
+  width: 100%;
 }
 
 .theme-card {
@@ -406,6 +414,7 @@ body[data-theme="minimal"] {
   padding: 4px;
   border-radius: 12px;
   transition: transform 0.15s ease;
+  min-width: 0;
 }
 
 .theme-card:hover { transform: translateY(-2px); }
@@ -434,11 +443,14 @@ body[data-theme="minimal"] {
 }
 
 .theme-card-label {
-  font-size: 0.68rem;
+  font-size: 0.65rem;
   font-weight: 700;
   color: var(--text-muted);
   text-align: center;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
 }
 
 .theme-card-active .theme-card-label {

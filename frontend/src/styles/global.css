@@ -72,6 +72,7 @@
   --input-focus-ring: rgba(225, 204, 239, 0.45);
 
   --error: #b43d63;
+  --error-bg: rgba(180, 61, 99, 0.08);
 }
 
 body[data-theme="blush"] {
@@ -148,6 +149,7 @@ body[data-theme="midnight"] {
   --input-focus-ring: rgba(110, 90, 165, 0.32);
 
   --error: #ff8db0;
+  --error-bg: rgba(255, 141, 176, 0.1);
 }
 
 body[data-theme="matcha"] {
@@ -219,11 +221,34 @@ body[data-theme="matcha"] {
   --input-focus-ring: rgba(190, 216, 171, 0.45);
 
   --error: #ba5d42;
+  --error-bg: rgba(186, 93, 66, 0.08);
 }
 
 /* ── Base Reset ── */
 * {
   box-sizing: border-box;
+}
+
+/* Smooth theme transitions on all elements */
+*, *::before, *::after {
+  transition:
+    background-color 0.25s ease,
+    background 0.25s ease,
+    border-color 0.25s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+/* But don't slow down interactive transitions */
+button, a, input, select, textarea {
+  transition:
+    background-color 0.15s ease,
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.18s ease,
+    opacity 0.18s ease;
 }
 
 body {
@@ -235,7 +260,7 @@ body {
     radial-gradient(circle at top left, var(--bg-radial-1) 0%, transparent 28%),
     radial-gradient(circle at bottom right, var(--bg-radial-2) 0%, transparent 30%),
     linear-gradient(180deg, var(--bg-grad-top) 0%, var(--bg-grad-bottom) 100%);
-  transition: background 0.35s ease, color 0.25s ease;
+  transition: background 0.3s ease, color 0.2s ease;
 }
 
 a {
@@ -962,8 +987,8 @@ select {
   animation: confettiFall 1.8s ease-in forwards;
 }
 
-.confetti-piece:nth-child(4n+1) { background: #f08ac0; }
-.confetti-piece:nth-child(4n+2) { background: #d784f7; }
+.confetti-piece:nth-child(4n+1) { background: var(--accent-grad); }
+.confetti-piece:nth-child(4n+2) { background: var(--brand-grad); }
 .confetti-piece:nth-child(4n+3) { background: #ffd166; }
 .confetti-piece:nth-child(4n+4) { background: #7bd389; }
 
@@ -1070,21 +1095,21 @@ select {
   justify-content: center;
   padding: 24px;
   background:
-    radial-gradient(circle at top left, #f8d7ea 0%, transparent 28%),
-    radial-gradient(circle at bottom right, #e2d4fb 0%, transparent 30%),
-    linear-gradient(180deg, #fbf7fc 0%, #f3eef8 100%);
+    radial-gradient(circle at top left, var(--bg-radial-1) 0%, transparent 28%),
+    radial-gradient(circle at bottom right, var(--bg-radial-2) 0%, transparent 30%),
+    linear-gradient(180deg, var(--bg-grad-top) 0%, var(--bg-grad-bottom) 100%);
 }
 
 .welcome-card {
   width: 100%;
   max-width: 520px;
   text-align: center;
-  background: rgba(255, 255, 255, 0.72);
+  background: var(--surface-soft);
   backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.8);
+  border: 1px solid var(--glass-border);
   border-radius: 36px;
   padding: 52px 34px 40px;
-  box-shadow: 0 20px 60px rgba(124, 90, 136, 0.12);
+  box-shadow: 0 20px 60px var(--shadow);
 }
 
 .sarcasm-bubble {
@@ -1093,12 +1118,12 @@ select {
   margin-bottom: 22px;
   padding: 14px 22px;
   border-radius: 999px;
-  background: #f5d6e8;
-  color: #57384f;
+  background: var(--panel-bg);
+  color: var(--text-muted);
   font-size: 0.98rem;
   font-weight: 700;
   line-height: 1.4;
-  box-shadow: 0 10px 24px rgba(240, 138, 192, 0.16);
+  box-shadow: 0 10px 24px var(--shadow);
 }
 
 .sarcasm-bubble::after {
@@ -1108,7 +1133,7 @@ select {
   bottom: -10px;
   width: 18px;
   height: 18px;
-  background: #f5d6e8;
+  background: var(--panel-bg);
   transform: rotate(45deg);
   border-radius: 4px;
 }
@@ -1118,7 +1143,7 @@ select {
   font-size: 0.82rem;
   font-weight: 800;
   letter-spacing: 0.22em;
-  color: #9d7a9b;
+  color: var(--text-soft);
 }
 
 .welcome-title {
@@ -1126,7 +1151,7 @@ select {
   font-size: 4.2rem;
   line-height: 1;
   font-weight: 800;
-  color: #2e2430;
+  color: var(--text);
 }
 
 .welcome-subtext {
@@ -1134,7 +1159,7 @@ select {
   margin: 18px auto 30px;
   font-size: 1.02rem;
   line-height: 1.65;
-  color: #6f5d72;
+  color: var(--text-muted);
 }
 
 .welcome-actions {
@@ -1162,23 +1187,23 @@ select {
 }
 
 .primary-bubble {
-  background: linear-gradient(135deg, #f08ac0 0%, #d784f7 100%);
+  background: var(--accent-grad);
   color: #ffffff;
-  box-shadow: 0 14px 30px rgba(215, 132, 247, 0.28);
+  box-shadow: 0 14px 30px var(--accent-shadow);
 }
 
 .primary-bubble:hover {
-  box-shadow: 0 18px 34px rgba(215, 132, 247, 0.34);
+  box-shadow: 0 18px 34px var(--accent-shadow);
 }
 
 .secondary-bubble {
-  background: #eef1c9;
-  color: #4c5622;
-  box-shadow: 0 10px 24px rgba(176, 186, 98, 0.16);
+  background: var(--surface-strong);
+  color: var(--text);
+  box-shadow: 0 10px 24px var(--shadow);
 }
 
 .secondary-bubble:hover {
-  box-shadow: 0 14px 28px rgba(176, 186, 98, 0.22);
+  box-shadow: 0 14px 28px var(--shadow);
 }
 
 @media (max-width: 640px) {
@@ -1312,7 +1337,7 @@ select {
   margin: 0 0 14px;
   padding: 12px 14px;
   border-radius: 14px;
-  background: rgba(180, 61, 99, 0.08);
+  background: var(--error-bg);
   color: var(--error);
   font-weight: 700;
   font-size: 0.92rem;
