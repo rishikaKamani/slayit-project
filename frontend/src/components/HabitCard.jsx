@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import api from "../api/client";
 import DayBubbleRow from "./DayBubbleRow";
 import { calculateStreak, countCompletedDays, getCurrentDayIndex, isFullyCompleted } from "../utils/streak";
@@ -7,7 +7,7 @@ import { generateShareCard, downloadShareCard, shareCard } from "../utils/shareC
 import "./streak-polish.css";
 
 const MILESTONES = [3, 7, 10];
-const EMOJI = { crown: "👑", fire: "🔥", muscle: "💪", smile: "🙂", grimace: "😬", skull: "💀" };
+const EMOJI = { crown: "??", fire: "??", muscle: "??", smile: "??", grimace: "??", skull: "??" };
 
 const STREAK_MSGS = {
   high: ["Unstoppable. Annoyingly so.", "You're showing off now.", "Okay fine, you're built different.", "This is getting suspicious.", "Double digits. Calm down."],
@@ -99,8 +99,9 @@ export default function HabitCard({ habit, onHideCompleted, onDelete }) {
   const handleCelebration = (newStreak) => {
     if (!MILESTONES.includes(newStreak)) return;
     playMilestone();
-    const msgs = MILESTONE_MSGS[newStreak] || [];
-    const msg = msgs.length ? pick(msgs) : (newStreak + "-day streak!");
+    const milestoneMsg = getMilestoneMessage(newStreak);
+    const fallback = MILESTONE_MSGS[newStreak] || [];
+    const msg = milestoneMsg || (fallback.length ? pick(fallback) : (newStreak + "-day streak!"));
     setCelebrationText(msg); setShowConfetti(true); setAnimateEmoji(true);
     setTimeout(() => setShowConfetti(false), 2200);
     setTimeout(() => setAnimateEmoji(false), 900);
@@ -178,7 +179,7 @@ export default function HabitCard({ habit, onHideCompleted, onDelete }) {
         <div className="share-modal-overlay" onClick={() => setSharePreview(null)}>
           <div className="share-modal" onClick={(e) => e.stopPropagation()}>
             <div className="share-modal-header">
-              <p className="share-modal-title">Your streak card 🔥</p>
+              <p className="share-modal-title">Your streak card ??</p>
               <button className="share-x-btn" onClick={() => setSharePreview(null)}>x</button>
             </div>
             <img src={sharePreview} alt="streak card" className="share-preview-img" />
