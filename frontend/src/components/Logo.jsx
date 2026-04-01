@@ -1,23 +1,39 @@
 export default function Logo() {
   return (
     <div className="brand-logo-bubble" aria-label="Slayit logo">
-      <svg
-        width="28"
-        height="28"
-        viewBox="0 0 24 24"
-        fill="none"
-      >
+      <svg width="30" height="30" viewBox="0 0 100 100" fill="none">
+        <defs>
+          <linearGradient id="crownGrad" x1="50" y1="20" x2="50" y2="78" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stopColor="#ffffff" />
+            <stop offset="50%" stopColor="#fef3c7" />
+            <stop offset="100%" stopColor="#fde68a" />
+          </linearGradient>
+          <filter id="crownShadow" x="-20%" y="-20%" width="140%" height="160%">
+            <feDropShadow dx="0" dy="3" stdDeviation="3" floodColor="rgba(80,20,120,0.4)" />
+          </filter>
+        </defs>
+
+        {/* Crown body */}
         <path
-          d="M4 17.5L5.4 9.5C5.47 9.13 5.91 8.98 6.17 9.23L9.15 12.05C9.4 12.29 9.8 12.18 9.92 11.86L11.35 7.7C11.48 7.31 12.02 7.31 12.15 7.7L13.58 11.86C13.7 12.18 14.1 12.29 14.35 12.05L17.33 9.23C17.59 8.98 18.03 9.13 18.1 9.5L19.5 17.5H4Z"
-          fill="white"
+          d="M20 78 L20 62 L22 42 L32 56 L50 22 L68 56 L78 42 L80 62 L80 78 Z"
+          fill="url(#crownGrad)"
+          filter="url(#crownShadow)"
+          strokeLinejoin="round"
         />
 
-        <path
-          d="M4.8 17.5H19.2"
-          stroke="white"
-          strokeWidth="1.8"
-          strokeLinecap="round"
+        {/* Crown base line */}
+        <rect x="20" y="72" width="60" height="8" rx="4"
+          fill="url(#crownGrad)"
+          filter="url(#crownShadow)"
         />
+
+        {/* Gem dots */}
+        <circle cx="50" cy="22" r="5" fill="#ffffff" opacity="0.95" />
+        <circle cx="22" cy="43" r="4" fill="#fde68a" opacity="0.9" />
+        <circle cx="78" cy="43" r="4" fill="#fde68a" opacity="0.9" />
+
+        {/* Shine highlight */}
+        <ellipse cx="38" cy="38" rx="10" ry="6" fill="white" opacity="0.12" transform="rotate(-30 38 38)" />
       </svg>
     </div>
   );
