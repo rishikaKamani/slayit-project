@@ -8,6 +8,7 @@ import PerformancePage from './pages/PerformancePage';
 import HistoryPage from './pages/HistoryPage';
 import CoachPage from './pages/CoachPage';
 import BadgePage from './pages/BadgePage';
+import InstallPage from './pages/InstallPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import InstallBanner from './pwa/InstallBanner';
 
@@ -66,6 +67,7 @@ export default function App() {
       />
 
       <Route path="/badge" element={<BadgePage />} />
+      <Route path="/install" element={<InstallPage />} />
       <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </>
