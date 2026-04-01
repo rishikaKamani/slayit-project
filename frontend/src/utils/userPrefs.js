@@ -4,23 +4,29 @@
 const KEY = (email) => `slayit_prefs_${email || 'guest'}`;
 
 export const DEFAULT_PREFS = {
-  toneMode: 'discipline',       // 'soft' | 'discipline' | 'savage'
-  motivationStyle: 'accountable', // 'gentle' | 'accountable' | 'brutal'
+  toneMode: 'discipline',           // single: 'soft' | 'discipline' | 'savage'
+  motivationStyle: 'accountable',   // single: 'gentle' | 'accountable' | 'brutal'
   reminderEnabled: true,
-  reminderTiming: 'both',       // 'morning' | 'evening' | 'both' | 'smart'
-  mainGoal: 'fitness',          // 'fitness' | 'studies' | 'health' | 'sleep' | 'productivity' | 'custom'
+  reminderTiming: ['both'],         // multi: array of 'morning' | 'evening' | 'both' | 'smart'
+  mainGoal: ['fitness'],            // multi: array of goal values
   customGoal: '',
-  painTrigger: 'streak',        // 'streak' | 'goals' | 'time' | 'consistency'
+  painTrigger: ['streak'],          // multi: array of trigger values
   weeklyReview: true,
   nickname: '',
-  greetingStyle: 'casual',      // 'casual' | 'motivational' | 'sarcastic'
+  greetingStyle: 'casual',          // single: 'casual' | 'motivational' | 'sarcastic'
 };
 
 export function loadPrefs(email) {
   try {
     const raw = localStorage.getItem(KEY(email));
     if (!raw) return { ...DEFAULT_PREFS };
-    return { ...DEFAULT_PREFS, ...JSON.parse(raw) };
+    const saved = JSON.parse(raw);
+    const merged = { ...DEFAULT_PREFS, ...saved };
+    // Migrate old single-value fields to arrays
+    if (!Array.isArray(merged.mainGoal))      merged.mainGoal = [merged.mainGoal || 'fitness'];
+    if (!Array.isArray(merged.painTrigger))   merged.painTrigger = [merged.painTrigger || 'streak'];
+    if (!Array.isArray(merged.reminderTiming)) merged.reminderTiming = [merged.reminderTiming || 'both'];
+    return merged;
   } catch {
     return { ...DEFAULT_PREFS };
   }

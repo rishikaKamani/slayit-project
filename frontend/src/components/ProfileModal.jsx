@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { loadPrefs, savePrefs, DEFAULT_PREFS } from '../utils/userPrefs';
 import { useAuth } from '../context/AuthContext';
 
-// ── Pill selector — replaces boring radio buttons ──
+// ── Pill selector — single select ──
 function PillGroup({ options, value, onChange }) {
   return (
     <div className="pill-group">
@@ -12,6 +12,30 @@ function PillGroup({ options, value, onChange }) {
           type="button"
           className={`pill-btn ${value === opt.value ? 'pill-active' : ''}`}
           onClick={() => onChange(opt.value)}
+        >
+          {opt.emoji && <span className="pill-emoji">{opt.emoji}</span>}
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ── Pill selector — multi select ──
+function MultiPillGroup({ options, value = [], onChange }) {
+  const toggle = (v) => {
+    const arr = Array.isArray(value) ? value : [value];
+    onChange(arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
+  };
+  const arr = Array.isArray(value) ? value : [value];
+  return (
+    <div className="pill-group">
+      {options.map((opt) => (
+        <button
+          key={opt.value}
+          type="button"
+          className={`pill-btn ${arr.includes(opt.value) ? 'pill-active' : ''}`}
+          onClick={() => toggle(opt.value)}
         >
           {opt.emoji && <span className="pill-emoji">{opt.emoji}</span>}
           {opt.label}
@@ -148,7 +172,7 @@ export default function ProfileModal({ onClose }) {
 
           {/* Main goal */}
           <PrefSection title="What are you mainly trying to improve?">
-            <PillGroup
+            <MultiPillGroup
               value={prefs.mainGoal}
               onChange={(v) => set('mainGoal', v)}
               options={[
@@ -160,7 +184,7 @@ export default function ProfileModal({ onClose }) {
                 { value: 'custom',       label: 'Custom',       emoji: '✏️' },
               ]}
             />
-            {prefs.mainGoal === 'custom' && (
+            {(Array.isArray(prefs.mainGoal) ? prefs.mainGoal : [prefs.mainGoal]).includes('custom') && (
               <input
                 className="pref-input"
                 placeholder="Describe your goal..."
@@ -174,7 +198,7 @@ export default function ProfileModal({ onClose }) {
 
           {/* Pain trigger */}
           <PrefSection title="What hits you harder?">
-            <PillGroup
+            <MultiPillGroup
               value={prefs.painTrigger}
               onChange={(v) => set('painTrigger', v)}
               options={[
@@ -196,7 +220,7 @@ export default function ProfileModal({ onClose }) {
             {prefs.reminderEnabled && (
               <div style={{ marginTop: '12px' }}>
                 <p className="pref-sub-label">When should reminders come?</p>
-                <PillGroup
+                <MultiPillGroup
                   value={prefs.reminderTiming}
                   onChange={(v) => set('reminderTiming', v)}
                   options={[
