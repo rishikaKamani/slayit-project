@@ -6,7 +6,6 @@ import { useAuth } from '../context/AuthContext';
 import ThemePicker from './ThemePicker';
 import AvatarPicker from './AvatarPicker';
 
-/* ── helpers ── */
 function PillGroup({ options, value, onChange }) {
   return (
     <div className="pill-group">
@@ -75,7 +74,6 @@ function CollapseSection({ title, defaultOpen = false, children }) {
   );
 }
 
-/* ── Main component ── */
 export default function ProfileModal({ onClose }) {
   const { user } = useAuth();
   const email = user?.email;
@@ -87,7 +85,6 @@ export default function ProfileModal({ onClose }) {
   const [theme, setTheme] = useState(() => getSavedTheme());
   const [saved, setSaved] = useState(false);
 
-  // Close on Escape
   useEffect(() => {
     const h = (e) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', h);
@@ -98,7 +95,7 @@ export default function ProfileModal({ onClose }) {
 
   const handleThemeChange = (val) => {
     setTheme(val);
-    applyTheme(val); // instant live preview
+    applyTheme(val);
   };
 
   const handleSave = () => {
@@ -115,11 +112,40 @@ export default function ProfileModal({ onClose }) {
   const hasCustomGoal = (Array.isArray(prefs.mainGoal) ? prefs.mainGoal : [prefs.mainGoal]).includes('custom');
 
   return (
-    <div className="profile-modal-overlay" onClick={onClose}>
-      <div className="profile-modal glass-card" onClick={(e) => e.stopPropagation()}>
-
-        {/* Header */}
-        <div className="profile-modal-header">
+    /* Full-screen overlay */
+    <div
+      onClick={onClose}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 9999,
+        display: 'flex',
+        alignItems: 'flex-start',
+        justifyContent: 'flex-end',
+        padding: '16px',
+        background: 'rgba(0,0,0,0.4)',
+        backdropFilter: 'blur(6px)',
+        overflowY: 'auto',
+      }}
+    >
+      {/* Modal container — NOT a flex child that can collapse */}
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          width: '100%',
+          maxWidth: '460px',
+          borderRadius: '28px',
+          background: 'var(--surface-strong)',
+          border: '1px solid var(--glass-border)',
+          boxShadow: '0 32px 80px var(--shadow)',
+          display: 'flex',
+          flexDirection: 'column',
+          maxHeight: 'calc(100vh - 32px)',
+          overflow: 'hidden',
+        }}
+      >
+        {/* ── HEADER (fixed, never scrolls) ── */}
+        <div className="profile-modal-header" style={{ flexShrink: 0 }}>
           <div className="profile-modal-avatar" style={{ background: avatarGrad }}>
             {avatar.type === 'emoji'
               ? <span className="avatar-emoji">{avatarEmoji}</span>
@@ -132,10 +158,19 @@ export default function ProfileModal({ onClose }) {
           <button className="profile-close-btn" onClick={onClose} aria-label="Close">✕</button>
         </div>
 
-        {/* Scrollable body */}
-        <div className="profile-modal-body">
-
-          {/* ── APPEARANCE ── */}
+        {/* ── SCROLLABLE CONTENT ── */}
+        <div
+          style={{
+            flex: '1 1 0',
+            minHeight: 0,
+            overflowY: 'auto',
+            WebkitOverflowScrolling: 'touch',
+            padding: '18px 20px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '16px',
+          }}
+        >
           <CollapseSection title="🎨  Appearance" defaultOpen={true}>
             <Section title="Theme">
               <ThemePicker current={theme} onChange={handleThemeChange} />
@@ -145,7 +180,6 @@ export default function ProfileModal({ onClose }) {
             </Section>
           </CollapseSection>
 
-          {/* ── IDENTITY ── */}
           <CollapseSection title="👤  Identity" defaultOpen={false}>
             <Section title="Display name">
               <input className="pref-input"
@@ -164,7 +198,6 @@ export default function ProfileModal({ onClose }) {
             </Section>
           </CollapseSection>
 
-          {/* ── FEEDBACK ── */}
           <CollapseSection title="💬  Feedback & Motivation" defaultOpen={false}>
             <Section title="Tone">
               <PillGroup value={prefs.toneMode} onChange={(v) => set('toneMode', v)}
@@ -189,7 +222,6 @@ export default function ProfileModal({ onClose }) {
             </Section>
           </CollapseSection>
 
-          {/* ── GOALS ── */}
           <CollapseSection title="🎯  Goals & Accountability" defaultOpen={false}>
             <Section title="What are you mainly trying to improve?">
               <MultiPillGroup value={prefs.mainGoal} onChange={(v) => set('mainGoal', v)}
@@ -219,7 +251,6 @@ export default function ProfileModal({ onClose }) {
             </Section>
           </CollapseSection>
 
-          {/* ── REMINDERS ── */}
           <CollapseSection title="🔔  Reminders" defaultOpen={false}>
             <Section title="Reminders">
               <Toggle checked={prefs.reminderEnabled}
@@ -245,16 +276,15 @@ export default function ProfileModal({ onClose }) {
             </Section>
           </CollapseSection>
 
+          {/* Save button inside scroll area so it's always reachable */}
+          <div style={{ paddingTop: '8px', paddingBottom: '8px' }}>
+            {saved && <p className="pref-saved-msg" style={{ marginBottom: '12px' }}>✓ Preferences saved.</p>}
+            <button className="primary-btn profile-save-btn" onClick={handleSave}
+              style={{ width: '100%', padding: '15px', fontSize: '1rem', borderRadius: '18px' }}>
+              Save Preferences
+            </button>
+          </div>
         </div>
-
-        {/* Footer */}
-        <div className="profile-modal-footer">
-          {saved && <p className="pref-saved-msg">✓ Preferences saved.</p>}
-          <button className="primary-btn profile-save-btn" onClick={handleSave}>
-            Save Preferences
-          </button>
-        </div>
-
       </div>
     </div>
   );
