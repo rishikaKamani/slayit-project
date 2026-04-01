@@ -5,6 +5,7 @@ import HabitCard from '../components/HabitCard';
 import NotificationPrompt from '../components/NotificationPrompt';
 import api from '../api/client';
 import InstallButton from '../pwa/InstallButton';
+import { recordActivity, initNotifications } from '../utils/notificationService';
 
 const HISTORY_KEY = 'slayit_habit_history';
 
@@ -59,6 +60,17 @@ export default function DashboardPage() {
       });
       setHabits(active);
       habitsRef.current = active;
+      // Record activity and init smart notifications
+      recordActivity();
+      const hasIncomplete = active.some((h) => {
+        const days = h.days || [];
+        const today = days.find((d) => {
+          const s = (d.status || '').toLowerCase();
+          return s !== 'done' && s !== 'missed';
+        });
+        return Boolean(today);
+      });
+      initNotifications(hasIncomplete);
       if (toHistory.length > 0) {
         setHistory((prev) => {
           let updated = [...prev];

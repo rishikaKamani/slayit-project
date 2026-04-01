@@ -2,24 +2,30 @@ import { useEffect, useState } from 'react';
 import Navbar from '../components/Navbar';
 import api from '../api/client';
 import { getScoreEmoji, getScoreMessage } from '../utils/score';
+import { computeOverallAnalytics } from '../utils/analytics';
+import ModeSelector from '../components/ModeSelector';
 
 export default function PerformancePage() {
   const [performance, setPerformance] = useState(null);
+  const [habits, setHabits] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
     const fetchPerformance = async () => {
       try {
-        const response = await api.get('/dashboard/performance');
-        setPerformance(response.data);
+        const [perfRes, habitsRes] = await Promise.all([
+          api.get('/dashboard/performance'),
+          api.get('/habits'),
+        ]);
+        setPerformance(perfRes.data);
+        setHabits(habitsRes.data || []);
       } catch (err) {
         setError(err.response?.data?.message || 'Could not load performance.');
       } finally {
         setLoading(false);
       }
     };
-
     fetchPerformance();
   }, []);
 
@@ -155,6 +161,44 @@ export default function PerformancePage() {
                   </tbody>
                 </table>
               </div>
+            </div>
+
+            {/* ── Advanced Analytics — additional section below existing stats ── */}
+            {(() => {
+              const { bestDay, worstDay, consistencyScore, weeklyInsight } = computeOverallAnalytics(habits);
+              return (
+                <div className="glass-card analytics-section">
+                  <h3 className="analytics-section-title">Advanced Insights</h3>
+                  <div className="analytics-section-grid">
+                    {bestDay && (
+                      <div className="analytics-section-stat">
+                        <span className="analytics-section-stat-label">Best Day</span>
+                        <span className="analytics-section-stat-value">📈 {bestDay}</span>
+                      </div>
+                    )}
+                    {worstDay && worstDay !== bestDay && (
+                      <div className="analytics-section-stat">
+                        <span className="analytics-section-stat-label">Worst Day</span>
+                        <span className="analytics-section-stat-value">📉 {worstDay}</span>
+                      </div>
+                    )}
+                    <div className="analytics-section-stat">
+                      <span className="analytics-section-stat-label">Consistency Score</span>
+                      <span className="analytics-section-stat-value">{consistencyScore}%</span>
+                    </div>
+                  </div>
+                  <p className="analytics-section-insight">{weeklyInsight}</p>
+                </div>
+              );
+            })()}
+
+            {/* ── Mode selector — only affects new feedback messages ── */}
+            <div className="glass-card" style={{ padding: '24px', borderRadius: '24px' }}>
+              <h3 style={{ marginBottom: '14px' }}>Feedback Mode</h3>
+              <p className="muted" style={{ marginBottom: '14px', fontSize: '0.9rem' }}>
+                Controls the tone of feedback messages when you mark habits. Existing UI text is unaffected.
+              </p>
+              <ModeSelector />
             </div>
           </>
         )}
