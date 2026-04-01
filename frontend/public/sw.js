@@ -3,7 +3,7 @@
  * Safe to fail: if this errors, the app works normally.
  */
 
-const CACHE_NAME = 'slayit-v2';
+const CACHE_NAME = 'slayit-v3';
 const NOTIF_KEY = 'slayit_last_notif_date';
 const NOTIF_HOUR = 20;
 
@@ -74,12 +74,18 @@ self.addEventListener('fetch', (event) => {
 // Handle notification click — open/focus the app
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
+  const url = (event.notification.data && event.notification.data.url) || '/dashboard';
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
-      if (clients.length > 0) {
-        return clients[0].focus();
+      // If app is already open, focus it
+      for (const client of clients) {
+        if (client.url.includes(self.location.origin) && 'focus' in client) {
+          client.navigate(url);
+          return client.focus();
+        }
       }
-      return self.clients.openWindow('/dashboard');
+      // Otherwise open a new window
+      return self.clients.openWindow(url);
     })
   );
 });

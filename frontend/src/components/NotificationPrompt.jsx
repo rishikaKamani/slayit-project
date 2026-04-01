@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
 const NOTIF_KEY = 'slayit_last_notif_date';
-const NOTIF_HOUR = 20; // 8 PM — remind users in the evening
+const NOTIF_HOUR = 20; // 8 PM
 
 const SASSY_REMINDERS = [
   { title: "👑 Slayit", body: "Your habits are waiting. They're not impressed yet." },
@@ -19,71 +19,67 @@ const SASSY_REMINDERS = [
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
 function shouldNotifyToday() {
-  const last = localStorage.getItem(NOTIF_KEY);
-  const today = new Date().toDateString();
-  return last !== today;
+  return localStorage.getItem(NOTIF_KEY) !== new Date().toDateString();
 }
 
 function markNotifiedToday() {
   localStorage.setItem(NOTIF_KEY, new Date().toDateString());
 }
 
-function fireReminder(force = false) {
+// Always use SW showNotification — works on mobile as a real system notification
+async function showViaServiceWorker(title, body, force = false) {
   if (Notification.permission !== 'granted') return;
   if (!force && !shouldNotifyToday()) return;
 
-  const msg = pick(SASSY_REMINDERS);
-  const notif = new Notification(msg.title, {
-    body: msg.body,
+  const reg = await navigator.serviceWorker?.ready;
+  if (!reg) return;
+
+  await reg.showNotification(title, {
+    body,
     icon: '/icons/icon-192.png',
     badge: '/icons/icon-192.png',
     tag: 'slayit-daily',
     renotify: true,
+    vibrate: [200, 100, 200],
+    data: { url: '/dashboard' },
   });
-
-  notif.onclick = () => {
-    window.focus();
-    notif.close();
-  };
 
   if (!force) markNotifiedToday();
 }
 
-function scheduleCheck() {
-  // Check every minute if it's time to notify (after NOTIF_HOUR)
-  const now = new Date();
-  if (now.getHours() >= NOTIF_HOUR && shouldNotifyToday()) {
-    fireReminder();
-  }
-}
-
-export function testNotification() {
+export async function testNotification() {
   if (Notification.permission !== 'granted') {
-    alert('Notifications not allowed. Enable them first.');
+    alert('Notifications not allowed. Enable them first from the prompt.');
     return;
   }
-  fireReminder(true);
+  const msg = pick(SASSY_REMINDERS);
+  await showViaServiceWorker(msg.title, msg.body, true);
+}
+
+function scheduleCheck() {
+  const now = new Date();
+  if (now.getHours() >= NOTIF_HOUR && shouldNotifyToday()) {
+    const msg = pick(SASSY_REMINDERS);
+    showViaServiceWorker(msg.title, msg.body);
+  }
 }
 
 export default function NotificationPrompt() {
   const [show, setShow] = useState(false);
 
   useEffect(() => {
-    if (!('Notification' in window)) return;
+    if (!('Notification' in window) || !('serviceWorker' in navigator)) return;
 
     if (Notification.permission === 'granted') {
-      // Already allowed — run check immediately + every minute
       scheduleCheck();
       const interval = setInterval(scheduleCheck, 60 * 1000);
       return () => clearInterval(interval);
     } else if (Notification.permission !== 'denied') {
-      // Show our custom prompt after 2s
       const t = setTimeout(() => setShow(true), 2000);
       return () => clearTimeout(t);
     }
   }, []);
 
-  // Also fire on window focus (user comes back to app)
   useEffect(() => {
     if (Notification.permission !== 'granted') return;
     const onFocus = () => scheduleCheck();
@@ -95,13 +91,7 @@ export default function NotificationPrompt() {
     setShow(false);
     const permission = await Notification.requestPermission();
     if (permission === 'granted') {
-      // Welcome notification immediately
-      new Notification('👑 Slayit', {
-        body: "Notifications on. We'll remind you to keep your streaks alive.",
-        icon: '/icons/icon-192.png',
-        tag: 'slayit-welcome',
-      });
-      // Start the daily check
+      await showViaServiceWorker('👑 Slayit', "Notifications on. We'll remind you to keep your streaks alive.", true);
       scheduleCheck();
       setInterval(scheduleCheck, 60 * 1000);
     }
