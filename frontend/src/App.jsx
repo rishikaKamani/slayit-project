@@ -9,10 +9,13 @@ import HistoryPage from './pages/HistoryPage';
 import CoachPage from './pages/CoachPage';
 import BadgePage from './pages/BadgePage';
 import ProtectedRoute from './components/ProtectedRoute';
+import InstallBanner from './pwa/InstallBanner';
 
 export default function App() {
   return (
-    <Routes>
+    <>
+      <InstallBanner />
+      <Routes>
       <Route path="/" element={<WelcomePage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignupPage />} />
@@ -64,6 +67,7 @@ export default function App() {
 
       <Route path="/badge" element={<BadgePage />} />
       <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+      </Routes>
+    </>
   );
 }

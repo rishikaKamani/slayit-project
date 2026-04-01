@@ -4,6 +4,7 @@ import Navbar from '../components/Navbar';
 import HabitCard from '../components/HabitCard';
 import NotificationPrompt from '../components/NotificationPrompt';
 import api from '../api/client';
+import InstallButton from '../pwa/InstallButton';
 
 const HISTORY_KEY = 'slayit_habit_history';
 
@@ -104,6 +105,7 @@ export default function DashboardPage() {
     <div className="page-shell">
       <Navbar />
       <NotificationPrompt />
+        <InstallButton />
       <div className="dashboard-page">
         <div className="dashboard-header">
           <div>
