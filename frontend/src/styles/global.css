@@ -250,7 +250,6 @@ button, a, input, select, textarea {
     transform 0.18s ease,
     opacity 0.18s ease;
 }
-
 body {
   margin: 0;
   min-width: 320px;
@@ -3071,7 +3070,7 @@ select {
 .profile-modal {
   width: 100%;
   max-width: 460px;
-  max-height: calc(100vh - 32px);
+  height: calc(100vh - 32px);
   border-radius: 28px;
   display: flex;
   flex-direction: column;
@@ -3387,6 +3386,7 @@ select {
   .profile-modal {
     max-width: 100%;
     width: 100%;
+    height: 92vh;
     max-height: 92vh;
     border-radius: 28px 28px 0 0;
     animation: slideUp 0.3s cubic-bezier(0.22, 1, 0.36, 1);
