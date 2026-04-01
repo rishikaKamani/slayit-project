@@ -3,7 +3,7 @@
  * Safe to fail: if this errors, the app works normally.
  */
 
-const CACHE_NAME = 'slayit-v3';
+const CACHE_NAME = 'slayit-v4';
 const NOTIF_KEY = 'slayit_last_notif_date';
 const NOTIF_HOUR = 20;
 
@@ -48,16 +48,16 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch: network-first for API, cache-first for static
+// Fetch: network-first for everything except images
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Never intercept API calls — always go to network
+  // Never intercept API calls
   if (url.pathname.startsWith('/api/') || url.hostname !== self.location.hostname) {
     return;
   }
 
-  // For navigation requests (page loads), try network then fall back to cached '/'
+  // Navigation requests: network-first, fallback to cached '/'
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request).catch(() => caches.match('/'))
@@ -65,7 +65,21 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // For static assets: cache-first
+  // JS/CSS: always network-first so updates deploy immediately
+  if (url.pathname.endsWith('.js') || url.pathname.endsWith('.css')) {
+    event.respondWith(
+      fetch(event.request)
+        .then((res) => {
+          const clone = res.clone();
+          caches.open(CACHE_NAME).then((c) => c.put(event.request, clone));
+          return res;
+        })
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
+  // Images/icons: cache-first (they rarely change)
   event.respondWith(
     caches.match(event.request).then((cached) => cached || fetch(event.request))
   );
