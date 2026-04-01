@@ -3061,14 +3061,11 @@ select {
   border-radius: 28px;
   display: flex;
   flex-direction: column;
-  /* Do NOT use overflow:hidden — it blocks body scroll */
-  overflow: visible;
+  overflow: hidden;
   animation: slideInRight 0.28s cubic-bezier(0.22, 1, 0.36, 1);
   background: var(--surface-strong);
   border: 1px solid var(--glass-border);
   box-shadow: 0 32px 80px var(--shadow);
-  /* Clip children to rounded corners without blocking scroll */
-  clip-path: inset(0 round 28px);
 }
 
 @keyframes slideInRight {
@@ -3141,10 +3138,11 @@ select {
   color: var(--text);
 }
 
-/* Scrollable body */
+/* Scrollable body — the ONLY scrolling element */
 .profile-modal-body {
-  flex: 1;
-  overflow-y: scroll !important;
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
   padding: 18px 22px;
@@ -3153,8 +3151,6 @@ select {
   gap: 22px;
   scrollbar-width: thin;
   scrollbar-color: var(--panel-border) transparent;
-  /* Ensure min-height so flex doesn't collapse it */
-  min-height: 0;
 }
 
 .profile-modal-body::-webkit-scrollbar {
@@ -3386,7 +3382,6 @@ select {
     clip-path: inset(0 round 28px 28px 0 0);
     animation: slideUp 0.3s cubic-bezier(0.22, 1, 0.36, 1);
   }
-
   .pill-group {
     gap: 6px;
   }
