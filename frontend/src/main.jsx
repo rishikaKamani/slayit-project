@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import { AuthProvider } from './context/AuthContext';
 import './styles/global.css';
+import './styles/themes-extra.css';
 import { registerPWA } from './pwa/register';
 
 // Register PWA — production only, fails silently

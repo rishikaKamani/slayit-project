@@ -1,15 +1,16 @@
 import { useEffect, useState } from 'react';
 import { loadPrefs, savePrefs, DEFAULT_PREFS } from '../utils/userPrefs';
+import { loadAvatar, saveAvatar, getAvatarGradientStyle, getEmojiById } from '../utils/avatarConfig';
+import { applyTheme, getSavedTheme } from '../utils/themeConfig';
 import { useAuth } from '../context/AuthContext';
+import ThemePicker from './ThemePicker';
+import AvatarPicker from './AvatarPicker';
 
-// ── Pill selector — single select ──
 function PillGroup({ options, value, onChange }) {
   return (
     <div className="pill-group">
       {options.map((opt) => (
-        <button
-          key={opt.value}
-          type="button"
+        <button key={opt.value} type="button"
           className={`pill-btn ${value === opt.value ? 'pill-active' : ''}`}
           onClick={() => onChange(opt.value)}
         >
@@ -21,7 +22,6 @@ function PillGroup({ options, value, onChange }) {
   );
 }
 
-// ── Pill selector — multi select ──
 function MultiPillGroup({ options, value = [], onChange }) {
   const toggle = (v) => {
     const arr = Array.isArray(value) ? value : [value];
@@ -31,9 +31,7 @@ function MultiPillGroup({ options, value = [], onChange }) {
   return (
     <div className="pill-group">
       {options.map((opt) => (
-        <button
-          key={opt.value}
-          type="button"
+        <button key={opt.value} type="button"
           className={`pill-btn ${arr.includes(opt.value) ? 'pill-active' : ''}`}
           onClick={() => toggle(opt.value)}
         >
@@ -45,17 +43,13 @@ function MultiPillGroup({ options, value = [], onChange }) {
   );
 }
 
-// ── Toggle switch ──
 function Toggle({ checked, onChange, label }) {
   return (
     <label className="pref-toggle">
       <span className="pref-toggle-label">{label}</span>
-      <div
-        className={`toggle-track ${checked ? 'toggle-on' : ''}`}
+      <div className={`toggle-track ${checked ? 'toggle-on' : ''}`}
         onClick={() => onChange(!checked)}
-        role="switch"
-        aria-checked={checked}
-        tabIndex={0}
+        role="switch" aria-checked={checked} tabIndex={0}
         onKeyDown={(e) => e.key === ' ' && onChange(!checked)}
       >
         <div className="toggle-thumb" />
@@ -64,12 +58,25 @@ function Toggle({ checked, onChange, label }) {
   );
 }
 
-// ── Section card ──
 function PrefSection({ title, children }) {
   return (
     <div className="pref-section">
       <p className="pref-section-title">{title}</p>
       {children}
+    </div>
+  );
+}
+
+// Collapsible section for grouping
+function CollapseSection({ title, defaultOpen = false, children }) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="collapse-section">
+      <button type="button" className="collapse-header" onClick={() => setOpen((o) => !o)}>
+        <span>{title}</span>
+        <span className={`collapse-arrow ${open ? 'collapse-open' : ''}`}>›</span>
+      </button>
+      {open && <div className="collapse-body">{children}</div>}
     </div>
   );
 }
@@ -80,9 +87,10 @@ export default function ProfileModal({ onClose }) {
   const firstName = user?.name?.split(' ')[0] || 'User';
 
   const [prefs, setPrefs] = useState(() => loadPrefs(email));
+  const [avatar, setAvatar] = useState(() => loadAvatar(email));
+  const [theme, setTheme] = useState(() => getSavedTheme());
   const [saved, setSaved] = useState(false);
 
-  // Close on Escape
   useEffect(() => {
     const handler = (e) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', handler);
@@ -91,10 +99,19 @@ export default function ProfileModal({ onClose }) {
 
   const set = (key, val) => setPrefs((p) => ({ ...p, [key]: val }));
 
+  const handleThemeChange = (val) => {
+    setTheme(val);
+    applyTheme(val);
+  };
+
   const handleSave = () => {
-    savePrefs(email, prefs);
+    savePrefs(email, { ...prefs, theme });
+    saveAvatar(email, avatar);
+    applyTheme(theme);
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
+    // Force navbar re-render by dispatching storage event
+    window.dispatchEvent(new Event('slayit-avatar-updated'));
   };
 
   const initial = firstName.charAt(0).toUpperCase();
@@ -105,7 +122,14 @@ export default function ProfileModal({ onClose }) {
 
         {/* Header */}
         <div className="profile-modal-header">
-          <div className="profile-modal-avatar">{initial}</div>
+          <div className="profile-modal-avatar" style={{
+            background: getAvatarGradientStyle(avatar.gradient)
+          }}>
+            {avatar.type === 'emoji'
+              ? <span className="avatar-emoji">{getEmojiById(avatar.emoji)}</span>
+              : initial
+            }
+          </div>
           <div className="profile-modal-identity">
             <p className="profile-modal-name">{prefs.nickname || firstName}</p>
             <p className="profile-modal-email">{email}</p>
@@ -115,139 +139,146 @@ export default function ProfileModal({ onClose }) {
 
         <div className="profile-modal-body">
 
-          {/* Nickname */}
-          <PrefSection title="Display name">
-            <input
-              className="pref-input"
-              placeholder={`e.g. ${firstName}, champ, boss...`}
-              value={prefs.nickname}
-              onChange={(e) => set('nickname', e.target.value)}
-              maxLength={24}
-            />
-          </PrefSection>
+          {/* ── APPEARANCE ── */}
+          <CollapseSection title="🎨  Appearance" defaultOpen={true}>
 
-          {/* Greeting style */}
-          <PrefSection title="How should SlayIt greet you?">
-            <PillGroup
-              value={prefs.greetingStyle}
-              onChange={(v) => set('greetingStyle', v)}
-              options={[
-                { value: 'casual',       label: 'Casual',       emoji: '👋' },
-                { value: 'motivational', label: 'Hype me up',   emoji: '🔥' },
-                { value: 'sarcastic',    label: 'Sarcastic',    emoji: '😏' },
-              ]}
-            />
-          </PrefSection>
+            <PrefSection title="Theme">
+              <ThemePicker current={theme} onChange={handleThemeChange} />
+            </PrefSection>
 
-          {/* Tone */}
-          <PrefSection title="What tone do you want from SlayIt?">
-            <PillGroup
-              value={prefs.toneMode}
-              onChange={(v) => set('toneMode', v)}
-              options={[
-                { value: 'soft',       label: 'Soft',       emoji: '🌸' },
-                { value: 'discipline', label: 'Discipline', emoji: '💼' },
-                { value: 'savage',     label: 'Savage',     emoji: '💀' },
-              ]}
-            />
-            <p className="pref-hint">
-              {prefs.toneMode === 'soft'       && 'Gentle, supportive messages.'}
-              {prefs.toneMode === 'discipline' && 'Direct, honest, no fluff.'}
-              {prefs.toneMode === 'savage'     && 'Zero mercy. Maximum sarcasm.'}
-            </p>
-          </PrefSection>
+            <PrefSection title="Avatar">
+              <AvatarPicker value={avatar} onChange={setAvatar} initial={initial} />
+            </PrefSection>
 
-          {/* Motivation style */}
-          <PrefSection title="How should SlayIt motivate you?">
-            <PillGroup
-              value={prefs.motivationStyle}
-              onChange={(v) => set('motivationStyle', v)}
-              options={[
-                { value: 'gentle',      label: 'Encourage me gently', emoji: '🤗' },
-                { value: 'accountable', label: 'Keep me accountable',  emoji: '📋' },
-                { value: 'brutal',      label: 'Be brutally honest',   emoji: '🔨' },
-              ]}
-            />
-          </PrefSection>
+          </CollapseSection>
 
-          {/* Main goal */}
-          <PrefSection title="What are you mainly trying to improve?">
-            <MultiPillGroup
-              value={prefs.mainGoal}
-              onChange={(v) => set('mainGoal', v)}
-              options={[
-                { value: 'fitness',      label: 'Fitness',      emoji: '🏋️' },
-                { value: 'studies',      label: 'Studies',      emoji: '📚' },
-                { value: 'health',       label: 'Health',       emoji: '🥗' },
-                { value: 'sleep',        label: 'Sleep',        emoji: '😴' },
-                { value: 'productivity', label: 'Productivity', emoji: '⚡' },
-                { value: 'custom',       label: 'Custom',       emoji: '✏️' },
-              ]}
-            />
-            {(Array.isArray(prefs.mainGoal) ? prefs.mainGoal : [prefs.mainGoal]).includes('custom') && (
-              <input
-                className="pref-input"
-                placeholder="Describe your goal..."
-                value={prefs.customGoal}
-                onChange={(e) => set('customGoal', e.target.value)}
-                maxLength={60}
-                style={{ marginTop: '10px' }}
+          {/* ── IDENTITY ── */}
+          <CollapseSection title="👤  Identity" defaultOpen={true}>
+
+            <PrefSection title="Display name">
+              <input className="pref-input"
+                placeholder={`e.g. ${firstName}, champ, boss...`}
+                value={prefs.nickname}
+                onChange={(e) => set('nickname', e.target.value)}
+                maxLength={24}
               />
-            )}
-          </PrefSection>
+            </PrefSection>
 
-          {/* Pain trigger */}
-          <PrefSection title="What hits you harder?">
-            <MultiPillGroup
-              value={prefs.painTrigger}
-              onChange={(v) => set('painTrigger', v)}
-              options={[
-                { value: 'streak',      label: 'Losing streaks',         emoji: '💔' },
-                { value: 'goals',       label: 'Missing goals',          emoji: '🎯' },
-                { value: 'time',        label: 'Wasting time',           emoji: '⏰' },
-                { value: 'consistency', label: 'Bad consistency reports', emoji: '📉' },
-              ]}
-            />
-          </PrefSection>
+            <PrefSection title="How should SlayIt greet you?">
+              <PillGroup value={prefs.greetingStyle} onChange={(v) => set('greetingStyle', v)}
+                options={[
+                  { value: 'casual',       label: 'Casual',     emoji: '👋' },
+                  { value: 'motivational', label: 'Hype me up', emoji: '🔥' },
+                  { value: 'sarcastic',    label: 'Sarcastic',  emoji: '😏' },
+                ]}
+              />
+            </PrefSection>
 
-          {/* Reminders */}
-          <PrefSection title="Reminders">
-            <Toggle
-              checked={prefs.reminderEnabled}
-              onChange={(v) => set('reminderEnabled', v)}
-              label="Enable reminders"
-            />
-            {prefs.reminderEnabled && (
-              <div style={{ marginTop: '12px' }}>
-                <p className="pref-sub-label">When should reminders come?</p>
-                <MultiPillGroup
-                  value={prefs.reminderTiming}
-                  onChange={(v) => set('reminderTiming', v)}
-                  options={[
-                    { value: 'morning', label: 'Morning', emoji: '🌅' },
-                    { value: 'evening', label: 'Evening', emoji: '🌙' },
-                    { value: 'both',    label: 'Both',    emoji: '🔔' },
-                    { value: 'smart',   label: 'Smart',   emoji: '🧠' },
-                  ]}
+          </CollapseSection>
+
+          {/* ── FEEDBACK ── */}
+          <CollapseSection title="💬  Feedback & Motivation">
+
+            <PrefSection title="Tone">
+              <PillGroup value={prefs.toneMode} onChange={(v) => set('toneMode', v)}
+                options={[
+                  { value: 'soft',       label: 'Soft',       emoji: '🌸' },
+                  { value: 'discipline', label: 'Discipline', emoji: '💼' },
+                  { value: 'savage',     label: 'Savage',     emoji: '💀' },
+                ]}
+              />
+              <p className="pref-hint">
+                {prefs.toneMode === 'soft'       && 'Gentle, supportive messages.'}
+                {prefs.toneMode === 'discipline' && 'Direct, honest, no fluff.'}
+                {prefs.toneMode === 'savage'     && 'Zero mercy. Maximum sarcasm.'}
+              </p>
+            </PrefSection>
+
+            <PrefSection title="Motivation style">
+              <PillGroup value={prefs.motivationStyle} onChange={(v) => set('motivationStyle', v)}
+                options={[
+                  { value: 'gentle',      label: 'Encourage me gently', emoji: '🤗' },
+                  { value: 'accountable', label: 'Keep me accountable',  emoji: '📋' },
+                  { value: 'brutal',      label: 'Be brutally honest',   emoji: '🔨' },
+                ]}
+              />
+            </PrefSection>
+
+          </CollapseSection>
+
+          {/* ── GOALS ── */}
+          <CollapseSection title="🎯  Goals & Accountability">
+
+            <PrefSection title="What are you mainly trying to improve?">
+              <MultiPillGroup value={prefs.mainGoal} onChange={(v) => set('mainGoal', v)}
+                options={[
+                  { value: 'fitness',      label: 'Fitness',      emoji: '🏋️' },
+                  { value: 'studies',      label: 'Studies',      emoji: '📚' },
+                  { value: 'health',       label: 'Health',       emoji: '🥗' },
+                  { value: 'sleep',        label: 'Sleep',        emoji: '😴' },
+                  { value: 'productivity', label: 'Productivity', emoji: '⚡' },
+                  { value: 'custom',       label: 'Custom',       emoji: '✏️' },
+                ]}
+              />
+              {(Array.isArray(prefs.mainGoal) ? prefs.mainGoal : [prefs.mainGoal]).includes('custom') && (
+                <input className="pref-input" placeholder="Describe your goal..."
+                  value={prefs.customGoal}
+                  onChange={(e) => set('customGoal', e.target.value)}
+                  maxLength={60} style={{ marginTop: '10px' }}
                 />
-              </div>
-            )}
-          </PrefSection>
+              )}
+            </PrefSection>
 
-          {/* Weekly review */}
-          <PrefSection title="Weekly review">
-            <Toggle
-              checked={prefs.weeklyReview}
-              onChange={(v) => set('weeklyReview', v)}
-              label="Send me a weekly performance summary"
-            />
-          </PrefSection>
+            <PrefSection title="What hits you harder?">
+              <MultiPillGroup value={prefs.painTrigger} onChange={(v) => set('painTrigger', v)}
+                options={[
+                  { value: 'streak',      label: 'Losing streaks',         emoji: '💔' },
+                  { value: 'goals',       label: 'Missing goals',          emoji: '🎯' },
+                  { value: 'time',        label: 'Wasting time',           emoji: '⏰' },
+                  { value: 'consistency', label: 'Bad consistency reports', emoji: '📉' },
+                ]}
+              />
+            </PrefSection>
+
+          </CollapseSection>
+
+          {/* ── REMINDERS ── */}
+          <CollapseSection title="🔔  Reminders">
+
+            <PrefSection title="Reminders">
+              <Toggle checked={prefs.reminderEnabled}
+                onChange={(v) => set('reminderEnabled', v)}
+                label="Enable reminders"
+              />
+              {prefs.reminderEnabled && (
+                <div style={{ marginTop: '12px' }}>
+                  <p className="pref-sub-label">When?</p>
+                  <MultiPillGroup value={prefs.reminderTiming} onChange={(v) => set('reminderTiming', v)}
+                    options={[
+                      { value: 'morning', label: 'Morning', emoji: '🌅' },
+                      { value: 'evening', label: 'Evening', emoji: '🌙' },
+                      { value: 'both',    label: 'Both',    emoji: '🔔' },
+                      { value: 'smart',   label: 'Smart',   emoji: '🧠' },
+                    ]}
+                  />
+                </div>
+              )}
+            </PrefSection>
+
+            <PrefSection title="Weekly review">
+              <Toggle checked={prefs.weeklyReview}
+                onChange={(v) => set('weeklyReview', v)}
+                label="Send me a weekly performance summary"
+              />
+            </PrefSection>
+
+          </CollapseSection>
 
         </div>
 
         {/* Footer */}
         <div className="profile-modal-footer">
-          {saved && <p className="pref-saved-msg">✓ SlayIt updated how it behaves toward you.</p>}
+          {saved && <p className="pref-saved-msg">✓ Preferences saved. SlayIt updated.</p>}
           <button className="primary-btn profile-save-btn" onClick={handleSave}>
             Save Preferences
           </button>

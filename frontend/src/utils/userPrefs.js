@@ -4,16 +4,17 @@
 const KEY = (email) => `slayit_prefs_${email || 'guest'}`;
 
 export const DEFAULT_PREFS = {
-  toneMode: 'discipline',           // single: 'soft' | 'discipline' | 'savage'
-  motivationStyle: 'accountable',   // single: 'gentle' | 'accountable' | 'brutal'
+  toneMode: 'discipline',
+  motivationStyle: 'accountable',
   reminderEnabled: true,
-  reminderTiming: ['both'],         // multi: array of 'morning' | 'evening' | 'both' | 'smart'
-  mainGoal: ['fitness'],            // multi: array of goal values
+  reminderTiming: ['both'],
+  mainGoal: ['fitness'],
   customGoal: '',
-  painTrigger: ['streak'],          // multi: array of trigger values
+  painTrigger: ['streak'],
   weeklyReview: true,
   nickname: '',
-  greetingStyle: 'casual',          // single: 'casual' | 'motivational' | 'sarcastic'
+  greetingStyle: 'casual',
+  theme: 'blush',               // persisted here too (synced with body attr)
 };
 
 export function loadPrefs(email) {
