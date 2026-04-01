@@ -60,6 +60,14 @@ export function registerPWA() {
     window.addEventListener('load', () => {
       navigator.serviceWorker
         .register('/sw.js')
+        .then((reg) => {
+          // Register periodic background sync if supported
+          if ('periodicSync' in reg) {
+            reg.periodicSync.register('slayit-daily-reminder', {
+              minInterval: 12 * 60 * 60 * 1000, // every 12 hours
+            }).catch(() => {});
+          }
+        })
         .catch(() => {
           // Fail silently — app works without SW
         });
