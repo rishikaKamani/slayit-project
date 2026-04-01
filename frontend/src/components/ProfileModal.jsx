@@ -101,7 +101,7 @@ export default function ProfileModal({ onClose }) {
 
   const handleThemeChange = (val) => {
     setTheme(val);
-    applyTheme(val);
+    applyTheme(val); // instant preview
   };
 
   const handleSave = () => {
@@ -110,8 +110,8 @@ export default function ProfileModal({ onClose }) {
     applyTheme(theme);
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
-    // Force navbar re-render by dispatching storage event
-    window.dispatchEvent(new Event('slayit-avatar-updated'));
+    // Notify navbar to refresh avatar + theme
+    window.dispatchEvent(new Event('slayit-prefs-saved'));
   };
 
   const initial = firstName.charAt(0).toUpperCase();
