@@ -28,16 +28,16 @@ function markNotifiedToday() {
   localStorage.setItem(NOTIF_KEY, new Date().toDateString());
 }
 
-function fireReminder() {
+function fireReminder(force = false) {
   if (Notification.permission !== 'granted') return;
-  if (!shouldNotifyToday()) return;
+  if (!force && !shouldNotifyToday()) return;
 
   const msg = pick(SASSY_REMINDERS);
   const notif = new Notification(msg.title, {
     body: msg.body,
     icon: '/icons/icon-192.png',
     badge: '/icons/icon-192.png',
-    tag: 'slayit-daily',       // replaces previous notification instead of stacking
+    tag: 'slayit-daily',
     renotify: true,
   });
 
@@ -46,7 +46,7 @@ function fireReminder() {
     notif.close();
   };
 
-  markNotifiedToday();
+  if (!force) markNotifiedToday();
 }
 
 function scheduleCheck() {
@@ -55,6 +55,14 @@ function scheduleCheck() {
   if (now.getHours() >= NOTIF_HOUR && shouldNotifyToday()) {
     fireReminder();
   }
+}
+
+export function testNotification() {
+  if (Notification.permission !== 'granted') {
+    alert('Notifications not allowed. Enable them first.');
+    return;
+  }
+  fireReminder(true);
 }
 
 export default function NotificationPrompt() {
