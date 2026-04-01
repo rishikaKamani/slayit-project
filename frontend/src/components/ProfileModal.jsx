@@ -1,19 +1,19 @@
 import { useEffect, useState } from 'react';
-import { loadPrefs, savePrefs, DEFAULT_PREFS } from '../utils/userPrefs';
+import { loadPrefs, savePrefs } from '../utils/userPrefs';
 import { loadAvatar, saveAvatar, getAvatarGradientStyle, getEmojiById } from '../utils/avatarConfig';
 import { applyTheme, getSavedTheme } from '../utils/themeConfig';
 import { useAuth } from '../context/AuthContext';
 import ThemePicker from './ThemePicker';
 import AvatarPicker from './AvatarPicker';
 
+/* ── helpers ── */
 function PillGroup({ options, value, onChange }) {
   return (
     <div className="pill-group">
       {options.map((opt) => (
         <button key={opt.value} type="button"
           className={`pill-btn ${value === opt.value ? 'pill-active' : ''}`}
-          onClick={() => onChange(opt.value)}
-        >
+          onClick={() => onChange(opt.value)}>
           {opt.emoji && <span className="pill-emoji">{opt.emoji}</span>}
           {opt.label}
         </button>
@@ -23,18 +23,14 @@ function PillGroup({ options, value, onChange }) {
 }
 
 function MultiPillGroup({ options, value = [], onChange }) {
-  const toggle = (v) => {
-    const arr = Array.isArray(value) ? value : [value];
-    onChange(arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
-  };
   const arr = Array.isArray(value) ? value : [value];
+  const toggle = (v) => onChange(arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
   return (
     <div className="pill-group">
       {options.map((opt) => (
         <button key={opt.value} type="button"
           className={`pill-btn ${arr.includes(opt.value) ? 'pill-active' : ''}`}
-          onClick={() => toggle(opt.value)}
-        >
+          onClick={() => toggle(opt.value)}>
           {opt.emoji && <span className="pill-emoji">{opt.emoji}</span>}
           {opt.label}
         </button>
@@ -50,15 +46,14 @@ function Toggle({ checked, onChange, label }) {
       <div className={`toggle-track ${checked ? 'toggle-on' : ''}`}
         onClick={() => onChange(!checked)}
         role="switch" aria-checked={checked} tabIndex={0}
-        onKeyDown={(e) => e.key === ' ' && onChange(!checked)}
-      >
+        onKeyDown={(e) => e.key === ' ' && onChange(!checked)}>
         <div className="toggle-thumb" />
       </div>
     </label>
   );
 }
 
-function PrefSection({ title, children }) {
+function Section({ title, children }) {
   return (
     <div className="pref-section">
       <p className="pref-section-title">{title}</p>
@@ -67,7 +62,6 @@ function PrefSection({ title, children }) {
   );
 }
 
-// Collapsible section for grouping
 function CollapseSection({ title, defaultOpen = false, children }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
@@ -81,27 +75,30 @@ function CollapseSection({ title, defaultOpen = false, children }) {
   );
 }
 
+/* ── Main component ── */
 export default function ProfileModal({ onClose }) {
   const { user } = useAuth();
   const email = user?.email;
   const firstName = user?.name?.split(' ')[0] || 'User';
+  const initial = firstName.charAt(0).toUpperCase();
 
   const [prefs, setPrefs] = useState(() => loadPrefs(email));
   const [avatar, setAvatar] = useState(() => loadAvatar(email));
   const [theme, setTheme] = useState(() => getSavedTheme());
   const [saved, setSaved] = useState(false);
 
+  // Close on Escape
   useEffect(() => {
-    const handler = (e) => { if (e.key === 'Escape') onClose(); };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
+    const h = (e) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', h);
+    return () => window.removeEventListener('keydown', h);
   }, [onClose]);
 
   const set = (key, val) => setPrefs((p) => ({ ...p, [key]: val }));
 
   const handleThemeChange = (val) => {
     setTheme(val);
-    applyTheme(val); // instant preview
+    applyTheme(val); // instant live preview
   };
 
   const handleSave = () => {
@@ -110,11 +107,12 @@ export default function ProfileModal({ onClose }) {
     applyTheme(theme);
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
-    // Notify navbar to refresh avatar + theme
     window.dispatchEvent(new Event('slayit-prefs-saved'));
   };
 
-  const initial = firstName.charAt(0).toUpperCase();
+  const avatarGrad = getAvatarGradientStyle(avatar.gradient);
+  const avatarEmoji = getEmojiById(avatar.emoji);
+  const hasCustomGoal = (Array.isArray(prefs.mainGoal) ? prefs.mainGoal : [prefs.mainGoal]).includes('custom');
 
   return (
     <div className="profile-modal-overlay" onClick={onClose}>
@@ -122,13 +120,10 @@ export default function ProfileModal({ onClose }) {
 
         {/* Header */}
         <div className="profile-modal-header">
-          <div className="profile-modal-avatar" style={{
-            background: getAvatarGradientStyle(avatar.gradient)
-          }}>
+          <div className="profile-modal-avatar" style={{ background: avatarGrad }}>
             {avatar.type === 'emoji'
-              ? <span className="avatar-emoji">{getEmojiById(avatar.emoji)}</span>
-              : initial
-            }
+              ? <span className="avatar-emoji">{avatarEmoji}</span>
+              : initial}
           </div>
           <div className="profile-modal-identity">
             <p className="profile-modal-name">{prefs.nickname || firstName}</p>
@@ -137,79 +132,66 @@ export default function ProfileModal({ onClose }) {
           <button className="profile-close-btn" onClick={onClose} aria-label="Close">✕</button>
         </div>
 
+        {/* Scrollable body */}
         <div className="profile-modal-body">
 
           {/* ── APPEARANCE ── */}
           <CollapseSection title="🎨  Appearance" defaultOpen={true}>
-
-            <PrefSection title="Theme">
+            <Section title="Theme">
               <ThemePicker current={theme} onChange={handleThemeChange} />
-            </PrefSection>
-
-            <PrefSection title="Avatar">
+            </Section>
+            <Section title="Avatar">
               <AvatarPicker value={avatar} onChange={setAvatar} initial={initial} />
-            </PrefSection>
-
+            </Section>
           </CollapseSection>
 
           {/* ── IDENTITY ── */}
-          <CollapseSection title="👤  Identity" defaultOpen={true}>
-
-            <PrefSection title="Display name">
+          <CollapseSection title="👤  Identity" defaultOpen={false}>
+            <Section title="Display name">
               <input className="pref-input"
                 placeholder={`e.g. ${firstName}, champ, boss...`}
                 value={prefs.nickname}
                 onChange={(e) => set('nickname', e.target.value)}
-                maxLength={24}
-              />
-            </PrefSection>
-
-            <PrefSection title="How should SlayIt greet you?">
+                maxLength={24} />
+            </Section>
+            <Section title="How should SlayIt greet you?">
               <PillGroup value={prefs.greetingStyle} onChange={(v) => set('greetingStyle', v)}
                 options={[
                   { value: 'casual',       label: 'Casual',     emoji: '👋' },
                   { value: 'motivational', label: 'Hype me up', emoji: '🔥' },
                   { value: 'sarcastic',    label: 'Sarcastic',  emoji: '😏' },
-                ]}
-              />
-            </PrefSection>
-
+                ]} />
+            </Section>
           </CollapseSection>
 
           {/* ── FEEDBACK ── */}
-          <CollapseSection title="💬  Feedback & Motivation">
-
-            <PrefSection title="Tone">
+          <CollapseSection title="💬  Feedback & Motivation" defaultOpen={false}>
+            <Section title="Tone">
               <PillGroup value={prefs.toneMode} onChange={(v) => set('toneMode', v)}
                 options={[
                   { value: 'soft',       label: 'Soft',       emoji: '🌸' },
                   { value: 'discipline', label: 'Discipline', emoji: '💼' },
                   { value: 'savage',     label: 'Savage',     emoji: '💀' },
-                ]}
-              />
+                ]} />
               <p className="pref-hint">
                 {prefs.toneMode === 'soft'       && 'Gentle, supportive messages.'}
                 {prefs.toneMode === 'discipline' && 'Direct, honest, no fluff.'}
                 {prefs.toneMode === 'savage'     && 'Zero mercy. Maximum sarcasm.'}
               </p>
-            </PrefSection>
-
-            <PrefSection title="Motivation style">
+            </Section>
+            <Section title="Motivation style">
               <PillGroup value={prefs.motivationStyle} onChange={(v) => set('motivationStyle', v)}
                 options={[
                   { value: 'gentle',      label: 'Encourage me gently', emoji: '🤗' },
                   { value: 'accountable', label: 'Keep me accountable',  emoji: '📋' },
                   { value: 'brutal',      label: 'Be brutally honest',   emoji: '🔨' },
-                ]}
-              />
-            </PrefSection>
-
+                ]} />
+            </Section>
           </CollapseSection>
 
           {/* ── GOALS ── */}
-          <CollapseSection title="🎯  Goals & Accountability">
-
-            <PrefSection title="What are you mainly trying to improve?">
+          <CollapseSection title="🎯  Goals & Accountability" defaultOpen={false}>
+            <Section title="What are you mainly trying to improve?">
               <MultiPillGroup value={prefs.mainGoal} onChange={(v) => set('mainGoal', v)}
                 options={[
                   { value: 'fitness',      label: 'Fitness',      emoji: '🏋️' },
@@ -218,38 +200,31 @@ export default function ProfileModal({ onClose }) {
                   { value: 'sleep',        label: 'Sleep',        emoji: '😴' },
                   { value: 'productivity', label: 'Productivity', emoji: '⚡' },
                   { value: 'custom',       label: 'Custom',       emoji: '✏️' },
-                ]}
-              />
-              {(Array.isArray(prefs.mainGoal) ? prefs.mainGoal : [prefs.mainGoal]).includes('custom') && (
+                ]} />
+              {hasCustomGoal && (
                 <input className="pref-input" placeholder="Describe your goal..."
                   value={prefs.customGoal}
                   onChange={(e) => set('customGoal', e.target.value)}
-                  maxLength={60} style={{ marginTop: '10px' }}
-                />
+                  maxLength={60} style={{ marginTop: '10px' }} />
               )}
-            </PrefSection>
-
-            <PrefSection title="What hits you harder?">
+            </Section>
+            <Section title="What hits you harder?">
               <MultiPillGroup value={prefs.painTrigger} onChange={(v) => set('painTrigger', v)}
                 options={[
                   { value: 'streak',      label: 'Losing streaks',         emoji: '💔' },
                   { value: 'goals',       label: 'Missing goals',          emoji: '🎯' },
                   { value: 'time',        label: 'Wasting time',           emoji: '⏰' },
                   { value: 'consistency', label: 'Bad consistency reports', emoji: '📉' },
-                ]}
-              />
-            </PrefSection>
-
+                ]} />
+            </Section>
           </CollapseSection>
 
           {/* ── REMINDERS ── */}
-          <CollapseSection title="🔔  Reminders">
-
-            <PrefSection title="Reminders">
+          <CollapseSection title="🔔  Reminders" defaultOpen={false}>
+            <Section title="Reminders">
               <Toggle checked={prefs.reminderEnabled}
                 onChange={(v) => set('reminderEnabled', v)}
-                label="Enable reminders"
-              />
+                label="Enable reminders" />
               {prefs.reminderEnabled && (
                 <div style={{ marginTop: '12px' }}>
                   <p className="pref-sub-label">When?</p>
@@ -259,26 +234,22 @@ export default function ProfileModal({ onClose }) {
                       { value: 'evening', label: 'Evening', emoji: '🌙' },
                       { value: 'both',    label: 'Both',    emoji: '🔔' },
                       { value: 'smart',   label: 'Smart',   emoji: '🧠' },
-                    ]}
-                  />
+                    ]} />
                 </div>
               )}
-            </PrefSection>
-
-            <PrefSection title="Weekly review">
+            </Section>
+            <Section title="Weekly review">
               <Toggle checked={prefs.weeklyReview}
                 onChange={(v) => set('weeklyReview', v)}
-                label="Send me a weekly performance summary"
-              />
-            </PrefSection>
-
+                label="Send me a weekly performance summary" />
+            </Section>
           </CollapseSection>
 
         </div>
 
         {/* Footer */}
         <div className="profile-modal-footer">
-          {saved && <p className="pref-saved-msg">✓ Preferences saved. SlayIt updated.</p>}
+          {saved && <p className="pref-saved-msg">✓ Preferences saved.</p>}
           <button className="primary-btn profile-save-btn" onClick={handleSave}>
             Save Preferences
           </button>
