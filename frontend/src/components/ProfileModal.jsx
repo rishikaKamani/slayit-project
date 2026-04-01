@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { loadPrefs, savePrefs } from '../utils/userPrefs';
 import { loadAvatar, saveAvatar, getAvatarGradientStyle, getEmojiById } from '../utils/avatarConfig';
 import { applyTheme, getSavedTheme } from '../utils/themeConfig';
@@ -67,7 +67,7 @@ function CollapseSection({ title, defaultOpen = false, children }) {
     <div className="collapse-section">
       <button type="button" className="collapse-header" onClick={() => setOpen((o) => !o)}>
         <span>{title}</span>
-        <span className={`collapse-arrow ${open ? 'collapse-open' : ''}`}>›</span>
+        <span className={`collapse-arrow ${open ? 'collapse-open' : ''}`}>â€º</span>
       </button>
       {open && <div className="collapse-body">{children}</div>}
     </div>
@@ -126,15 +126,16 @@ export default function ProfileModal({ onClose }) {
         alignItems: 'flex-start',
         justifyContent: 'flex-end',
         padding: '16px',
+        height: '100vh',
       }}
     >
-      {/* Modal panel — fixed height, flex column */}
+      {/* Modal panel â€” fixed height, flex column */}
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
           width: '100%',
           maxWidth: '460px',
-          height: 'calc(100vh - 32px)',
+          maxHeight: 'calc(100vh - 32px)',
           borderRadius: '28px',
           background: 'var(--surface-strong)',
           border: '1px solid var(--glass-border)',
@@ -144,7 +145,7 @@ export default function ProfileModal({ onClose }) {
           overflow: 'hidden',
         }}
       >
-        {/* HEADER — fixed, never scrolls */}
+        {/* HEADER â€” fixed, never scrolls */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
@@ -174,12 +175,12 @@ export default function ProfileModal({ onClose }) {
             width: 34, height: 34, border: 'none', borderRadius: '10px',
             background: 'var(--surface-soft)', color: 'var(--text-muted)',
             fontSize: '1rem', cursor: 'pointer', display: 'grid', placeItems: 'center', flexShrink: 0,
-          }}>✕</button>
+          }}>âœ•</button>
         </div>
 
-        {/* SCROLLABLE CONTENT — takes all remaining height */}
+        {/* SCROLLABLE CONTENT â€” takes all remaining height */}
         <div style={{
-          flex: '1 1 0px',
+          flex: 1,
           minHeight: 0,
           overflowY: 'auto',
           WebkitOverflowScrolling: 'touch',
@@ -189,7 +190,7 @@ export default function ProfileModal({ onClose }) {
           gap: '14px',
         }}>
 
-          <CollapseSection title="🎨  Appearance" defaultOpen={true}>
+          <CollapseSection title="ðŸŽ¨  Appearance" defaultOpen={true}>
             <Section title="Theme">
               <ThemePicker current={theme} onChange={handleThemeChange} />
             </Section>
@@ -198,7 +199,7 @@ export default function ProfileModal({ onClose }) {
             </Section>
           </CollapseSection>
 
-          <CollapseSection title="👤  Identity" defaultOpen={false}>
+          <CollapseSection title="ðŸ‘¤  Identity" defaultOpen={false}>
             <Section title="Display name">
               <input className="pref-input"
                 placeholder={`e.g. ${firstName}, champ, boss...`}
@@ -209,20 +210,20 @@ export default function ProfileModal({ onClose }) {
             <Section title="How should SlayIt greet you?">
               <PillGroup value={prefs.greetingStyle} onChange={(v) => set('greetingStyle', v)}
                 options={[
-                  { value: 'casual',       label: 'Casual',     emoji: '👋' },
-                  { value: 'motivational', label: 'Hype me up', emoji: '🔥' },
-                  { value: 'sarcastic',    label: 'Sarcastic',  emoji: '😏' },
+                  { value: 'casual',       label: 'Casual',     emoji: 'ðŸ‘‹' },
+                  { value: 'motivational', label: 'Hype me up', emoji: 'ðŸ”¥' },
+                  { value: 'sarcastic',    label: 'Sarcastic',  emoji: 'ðŸ˜' },
                 ]} />
             </Section>
           </CollapseSection>
 
-          <CollapseSection title="💬  Feedback & Motivation" defaultOpen={false}>
+          <CollapseSection title="ðŸ’¬  Feedback & Motivation" defaultOpen={false}>
             <Section title="Tone">
               <PillGroup value={prefs.toneMode} onChange={(v) => set('toneMode', v)}
                 options={[
-                  { value: 'soft',       label: 'Soft',       emoji: '🌸' },
-                  { value: 'discipline', label: 'Discipline', emoji: '💼' },
-                  { value: 'savage',     label: 'Savage',     emoji: '💀' },
+                  { value: 'soft',       label: 'Soft',       emoji: 'ðŸŒ¸' },
+                  { value: 'discipline', label: 'Discipline', emoji: 'ðŸ’¼' },
+                  { value: 'savage',     label: 'Savage',     emoji: 'ðŸ’€' },
                 ]} />
               <p className="pref-hint">
                 {prefs.toneMode === 'soft' && 'Gentle, supportive messages.'}
@@ -233,23 +234,23 @@ export default function ProfileModal({ onClose }) {
             <Section title="Motivation style">
               <PillGroup value={prefs.motivationStyle} onChange={(v) => set('motivationStyle', v)}
                 options={[
-                  { value: 'gentle',      label: 'Encourage me gently', emoji: '🤗' },
-                  { value: 'accountable', label: 'Keep me accountable',  emoji: '📋' },
-                  { value: 'brutal',      label: 'Be brutally honest',   emoji: '🔨' },
+                  { value: 'gentle',      label: 'Encourage me gently', emoji: 'ðŸ¤—' },
+                  { value: 'accountable', label: 'Keep me accountable',  emoji: 'ðŸ“‹' },
+                  { value: 'brutal',      label: 'Be brutally honest',   emoji: 'ðŸ”¨' },
                 ]} />
             </Section>
           </CollapseSection>
 
-          <CollapseSection title="🎯  Goals & Accountability" defaultOpen={false}>
+          <CollapseSection title="ðŸŽ¯  Goals & Accountability" defaultOpen={false}>
             <Section title="What are you mainly trying to improve?">
               <MultiPillGroup value={prefs.mainGoal} onChange={(v) => set('mainGoal', v)}
                 options={[
-                  { value: 'fitness',      label: 'Fitness',      emoji: '🏋️' },
-                  { value: 'studies',      label: 'Studies',      emoji: '📚' },
-                  { value: 'health',       label: 'Health',       emoji: '🥗' },
-                  { value: 'sleep',        label: 'Sleep',        emoji: '😴' },
-                  { value: 'productivity', label: 'Productivity', emoji: '⚡' },
-                  { value: 'custom',       label: 'Custom',       emoji: '✏️' },
+                  { value: 'fitness',      label: 'Fitness',      emoji: 'ðŸ‹ï¸' },
+                  { value: 'studies',      label: 'Studies',      emoji: 'ðŸ“š' },
+                  { value: 'health',       label: 'Health',       emoji: 'ðŸ¥—' },
+                  { value: 'sleep',        label: 'Sleep',        emoji: 'ðŸ˜´' },
+                  { value: 'productivity', label: 'Productivity', emoji: 'âš¡' },
+                  { value: 'custom',       label: 'Custom',       emoji: 'âœï¸' },
                 ]} />
               {hasCustomGoal && (
                 <input className="pref-input" placeholder="Describe your goal..."
@@ -261,15 +262,15 @@ export default function ProfileModal({ onClose }) {
             <Section title="What hits you harder?">
               <MultiPillGroup value={prefs.painTrigger} onChange={(v) => set('painTrigger', v)}
                 options={[
-                  { value: 'streak',      label: 'Losing streaks',         emoji: '💔' },
-                  { value: 'goals',       label: 'Missing goals',          emoji: '🎯' },
-                  { value: 'time',        label: 'Wasting time',           emoji: '⏰' },
-                  { value: 'consistency', label: 'Bad consistency reports', emoji: '📉' },
+                  { value: 'streak',      label: 'Losing streaks',         emoji: 'ðŸ’”' },
+                  { value: 'goals',       label: 'Missing goals',          emoji: 'ðŸŽ¯' },
+                  { value: 'time',        label: 'Wasting time',           emoji: 'â°' },
+                  { value: 'consistency', label: 'Bad consistency reports', emoji: 'ðŸ“‰' },
                 ]} />
             </Section>
           </CollapseSection>
 
-          <CollapseSection title="🔔  Reminders" defaultOpen={false}>
+          <CollapseSection title="ðŸ””  Reminders" defaultOpen={false}>
             <Section title="Reminders">
               <Toggle checked={prefs.reminderEnabled}
                 onChange={(v) => set('reminderEnabled', v)}
@@ -279,10 +280,10 @@ export default function ProfileModal({ onClose }) {
                   <p className="pref-sub-label">When?</p>
                   <MultiPillGroup value={prefs.reminderTiming} onChange={(v) => set('reminderTiming', v)}
                     options={[
-                      { value: 'morning', label: 'Morning', emoji: '🌅' },
-                      { value: 'evening', label: 'Evening', emoji: '🌙' },
-                      { value: 'both',    label: 'Both',    emoji: '🔔' },
-                      { value: 'smart',   label: 'Smart',   emoji: '🧠' },
+                      { value: 'morning', label: 'Morning', emoji: 'ðŸŒ…' },
+                      { value: 'evening', label: 'Evening', emoji: 'ðŸŒ™' },
+                      { value: 'both',    label: 'Both',    emoji: 'ðŸ””' },
+                      { value: 'smart',   label: 'Smart',   emoji: 'ðŸ§ ' },
                     ]} />
                 </div>
               )}
@@ -298,7 +299,7 @@ export default function ProfileModal({ onClose }) {
           <div style={{ paddingTop: '4px', paddingBottom: '8px' }}>
             {saved && (
               <p className="pref-saved-msg" style={{ marginBottom: '12px' }}>
-                ✓ Preferences saved.
+                âœ“ Preferences saved.
               </p>
             )}
             <button
@@ -325,3 +326,4 @@ export default function ProfileModal({ onClose }) {
     </div>
   );
 }
+
