@@ -111,66 +111,84 @@ export default function ProfileModal({ onClose }) {
   const avatarEmoji = getEmojiById(avatar.emoji);
   const hasCustomGoal = (Array.isArray(prefs.mainGoal) ? prefs.mainGoal : [prefs.mainGoal]).includes('custom');
 
+  // Overlay: fixed, covers screen, click outside to close
+  // Modal: fixed height, flex column, right-aligned on desktop
   return (
-    /* Full-screen overlay */
     <div
       onClick={onClose}
       style={{
         position: 'fixed',
         inset: 0,
         zIndex: 9999,
+        background: 'rgba(0,0,0,0.45)',
+        backdropFilter: 'blur(5px)',
         display: 'flex',
         alignItems: 'flex-start',
         justifyContent: 'flex-end',
         padding: '16px',
-        background: 'rgba(0,0,0,0.4)',
-        backdropFilter: 'blur(6px)',
-        overflowY: 'auto',
       }}
     >
-      {/* Modal container — NOT a flex child that can collapse */}
+      {/* Modal panel — fixed height, flex column */}
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
           width: '100%',
           maxWidth: '460px',
+          height: 'calc(100vh - 32px)',
           borderRadius: '28px',
           background: 'var(--surface-strong)',
           border: '1px solid var(--glass-border)',
           boxShadow: '0 32px 80px var(--shadow)',
           display: 'flex',
           flexDirection: 'column',
-          maxHeight: 'calc(100vh - 32px)',
           overflow: 'hidden',
         }}
       >
-        {/* ── HEADER (fixed, never scrolls) ── */}
-        <div className="profile-modal-header" style={{ flexShrink: 0 }}>
-          <div className="profile-modal-avatar" style={{ background: avatarGrad }}>
-            {avatar.type === 'emoji'
-              ? <span className="avatar-emoji">{avatarEmoji}</span>
-              : initial}
+        {/* HEADER — fixed, never scrolls */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '14px',
+          padding: '20px 20px 16px',
+          borderBottom: '1px solid var(--panel-border)',
+          flexShrink: 0,
+          background: 'var(--surface-strong)',
+        }}>
+          <div style={{
+            width: 48, height: 48, borderRadius: '50%',
+            display: 'grid', placeItems: 'center',
+            fontWeight: 800, fontSize: '1.2rem', color: '#fff',
+            background: avatarGrad, flexShrink: 0,
+          }}>
+            {avatar.type === 'emoji' ? <span>{avatarEmoji}</span> : initial}
           </div>
-          <div className="profile-modal-identity">
-            <p className="profile-modal-name">{prefs.nickname || firstName}</p>
-            <p className="profile-modal-email">{email}</p>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ margin: 0, fontWeight: 800, fontSize: '1rem', color: 'var(--text)' }}>
+              {prefs.nickname || firstName}
+            </p>
+            <p style={{ margin: '2px 0 0', fontSize: '0.8rem', color: 'var(--text-soft)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {email}
+            </p>
           </div>
-          <button className="profile-close-btn" onClick={onClose} aria-label="Close">✕</button>
+          <button onClick={onClose} aria-label="Close" style={{
+            width: 34, height: 34, border: 'none', borderRadius: '10px',
+            background: 'var(--surface-soft)', color: 'var(--text-muted)',
+            fontSize: '1rem', cursor: 'pointer', display: 'grid', placeItems: 'center', flexShrink: 0,
+          }}>✕</button>
         </div>
 
-        {/* ── SCROLLABLE CONTENT ── */}
-        <div
-          style={{
-            flex: '1 1 0',
-            minHeight: 0,
-            overflowY: 'auto',
-            WebkitOverflowScrolling: 'touch',
-            padding: '18px 20px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '16px',
-          }}
-        >
+        {/* SCROLLABLE CONTENT — takes all remaining height */}
+        <div style={{
+          flex: '1 1 0px',
+          minHeight: 0,
+          overflowY: 'auto',
+          WebkitOverflowScrolling: 'touch',
+          padding: '16px 18px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '14px',
+        }}>
+
           <CollapseSection title="🎨  Appearance" defaultOpen={true}>
             <Section title="Theme">
               <ThemePicker current={theme} onChange={handleThemeChange} />
@@ -207,9 +225,9 @@ export default function ProfileModal({ onClose }) {
                   { value: 'savage',     label: 'Savage',     emoji: '💀' },
                 ]} />
               <p className="pref-hint">
-                {prefs.toneMode === 'soft'       && 'Gentle, supportive messages.'}
+                {prefs.toneMode === 'soft' && 'Gentle, supportive messages.'}
                 {prefs.toneMode === 'discipline' && 'Direct, honest, no fluff.'}
-                {prefs.toneMode === 'savage'     && 'Zero mercy. Maximum sarcasm.'}
+                {prefs.toneMode === 'savage' && 'Zero mercy. Maximum sarcasm.'}
               </p>
             </Section>
             <Section title="Motivation style">
@@ -276,14 +294,32 @@ export default function ProfileModal({ onClose }) {
             </Section>
           </CollapseSection>
 
-          {/* Save button inside scroll area so it's always reachable */}
-          <div style={{ paddingTop: '8px', paddingBottom: '8px' }}>
-            {saved && <p className="pref-saved-msg" style={{ marginBottom: '12px' }}>✓ Preferences saved.</p>}
-            <button className="primary-btn profile-save-btn" onClick={handleSave}
-              style={{ width: '100%', padding: '15px', fontSize: '1rem', borderRadius: '18px' }}>
+          {/* Save button at bottom of scroll area */}
+          <div style={{ paddingTop: '4px', paddingBottom: '8px' }}>
+            {saved && (
+              <p className="pref-saved-msg" style={{ marginBottom: '12px' }}>
+                ✓ Preferences saved.
+              </p>
+            )}
+            <button
+              onClick={handleSave}
+              style={{
+                width: '100%',
+                padding: '15px',
+                border: 'none',
+                borderRadius: '18px',
+                fontWeight: 800,
+                fontSize: '1rem',
+                color: '#fff',
+                background: 'var(--accent-grad)',
+                boxShadow: '0 14px 28px var(--accent-shadow)',
+                cursor: 'pointer',
+              }}
+            >
               Save Preferences
             </button>
           </div>
+
         </div>
       </div>
     </div>
