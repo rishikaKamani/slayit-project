@@ -2,7 +2,7 @@
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import HabitCard from '../components/HabitCard';
-import NotificationPrompt, { testNotification } from '../components/NotificationPrompt';
+import NotificationPrompt from '../components/NotificationPrompt';
 import api from '../api/client';
 import InstallButton from '../pwa/InstallButton';
 
@@ -112,11 +112,6 @@ export default function DashboardPage() {
             <h1 className="dashboard-title">Your Habits</h1>
             <p className="dashboard-subtitle">Track what you started. Or ignore it creatively.</p>
           </div>
-          {'Notification' in window && Notification.permission === 'granted' && (
-            <button className="ghost-btn" style={{ fontSize: '0.82rem', padding: '8px 14px' }} onClick={testNotification}>
-              🔔 Test Notification
-            </button>
-          )}
         </div>
         {loading && <p>Loading your habits...</p>}
         {!loading && error && <p className="error-text">{error}</p>}
