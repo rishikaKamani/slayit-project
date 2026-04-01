@@ -3,31 +3,13 @@
  * Safe to fail: if this errors, the app works normally.
  */
 
-const CACHE_NAME = 'slayit-v4';
-const NOTIF_KEY = 'slayit_last_notif_date';
-const NOTIF_HOUR = 20;
+const CACHE_NAME = 'slayit-v5';
 
-const SASSY_REMINDERS = [
-  { title: "👑 Slayit", body: "Your habits are waiting. They're not impressed yet." },
-  { title: "🔥 Slayit", body: "Streak check. Don't be the person who forgets." },
-  { title: "💀 Slayit", body: "Zero progress today. Bold strategy. Log your habits." },
-  { title: "😤 Slayit", body: "Your future self is watching. Don't embarrass them." },
-  { title: "💪 Slayit", body: "Consistency is boring. Do it anyway." },
-  { title: "🙂 Slayit", body: "Still haven't logged today? Interesting choice." },
-  { title: "🔥 Slayit", body: "One log. That's all. You can do one thing." },
-  { title: "👑 Slayit", body: "Day's almost over. Don't let it end with zero." },
-];
-
-function pickReminder() {
-  return SASSY_REMINDERS[Math.floor(Math.random() * SASSY_REMINDERS.length)];
-}
-
-// Only cache static shell assets
+// Only cache icons and manifest — never JS/CSS
 const STATIC_ASSETS = [
-  '/',
-  '/manifest.json',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
+  '/manifest.json',
 ];
 
 // Install: cache static assets
@@ -48,7 +30,7 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch: network-first for everything except images
+// Fetch: never cache JS/CSS — always network. Only cache icons.
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
@@ -57,29 +39,18 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Navigation requests: network-first, fallback to cached '/'
-  if (event.request.mode === 'navigate') {
-    event.respondWith(
-      fetch(event.request).catch(() => caches.match('/'))
-    );
+  // JS/CSS/HTML: always network — never serve stale code
+  if (
+    event.request.mode === 'navigate' ||
+    url.pathname.endsWith('.js') ||
+    url.pathname.endsWith('.css') ||
+    url.pathname.endsWith('.html')
+  ) {
+    event.respondWith(fetch(event.request));
     return;
   }
 
-  // JS/CSS: always network-first so updates deploy immediately
-  if (url.pathname.endsWith('.js') || url.pathname.endsWith('.css')) {
-    event.respondWith(
-      fetch(event.request)
-        .then((res) => {
-          const clone = res.clone();
-          caches.open(CACHE_NAME).then((c) => c.put(event.request, clone));
-          return res;
-        })
-        .catch(() => caches.match(event.request))
-    );
-    return;
-  }
-
-  // Images/icons: cache-first (they rarely change)
+  // Icons/images: cache-first
   event.respondWith(
     caches.match(event.request).then((cached) => cached || fetch(event.request))
   );
@@ -107,20 +78,14 @@ self.addEventListener('notificationclick', (event) => {
 // Periodic background sync (fires when browser supports it)
 self.addEventListener('periodicsync', (event) => {
   if (event.tag === 'slayit-daily-reminder') {
-    event.waitUntil(sendDailyReminder());
+    event.waitUntil(
+      self.registration.showNotification('👑 Slayit', {
+        body: "Don't forget to log your habits today.",
+        icon: '/icons/icon-192.png',
+        badge: '/icons/icon-192.png',
+        tag: 'slayit-daily',
+        renotify: true,
+      })
+    );
   }
 });
-
-async function sendDailyReminder() {
-  const now = new Date();
-  if (now.getHours() < NOTIF_HOUR) return;
-
-  const msg = pickReminder();
-  await self.registration.showNotification(msg.title, {
-    body: msg.body,
-    icon: '/icons/icon-192.png',
-    badge: '/icons/icon-192.png',
-    tag: 'slayit-daily',
-    renotify: true,
-  });
-}

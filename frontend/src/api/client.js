@@ -25,4 +25,21 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// On 401 — token expired or invalid — clear auth and redirect to login
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      const url = error.config?.url || '';
+      const isAuthRoute = url.includes('/auth/signup') || url.includes('/auth/login');
+      if (!isAuthRoute) {
+        localStorage.removeItem('slayit_token');
+        localStorage.removeItem('slayit_user');
+        window.location.href = '/login';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default api;
