@@ -1,27 +1,31 @@
-import { useEffect, useRef, useState } from "react";
+﻿import { useEffect, useRef, useState } from "react";
 import api from "../api/client";
 import DayBubbleRow from "./DayBubbleRow";
 import { calculateStreak, countCompletedDays, getCurrentDayIndex, isFullyCompleted } from "../utils/streak";
 import { playDone, playMiss, playMilestone, playSlay } from "../utils/sounds";
-import { generateShareCard, downloadShareCard, shareCard } from "../utils/shareCard";
+import { generateShareCard } from "../utils/shareCard";
+import { getMissedMessage, getDoneMessage, getStreakBrokenMessage, getMilestoneMessage } from "../utils/feedbackMessages";
+import ExcuseModal from "./ExcuseModal";
+import StreakToast from "./StreakToast";
+import AnalyticsInsights from "./AnalyticsInsights";
+import ShareModal from "./ShareModal";
 import "./streak-polish.css";
 
 const MILESTONES = [3, 7, 10];
-const EMOJI = { crown: "??", fire: "??", muscle: "??", smile: "??", grimace: "??", skull: "??" };
+const EMOJI = { crown: "crown", fire: "fire", muscle: "muscle", smile: "smile", grimace: "grimace", skull: "skull" };
+const EMOJI_CHARS = { crown: "\uD83D\uDC51", fire: "\uD83D\uDD25", muscle: "\uD83D\uDCAA", smile: "\uD83D\uDE42", grimace: "\uD83D\uDE2C", skull: "\uD83D\uDC80" };
 
 const STREAK_MSGS = {
-  high: ["Unstoppable. Annoyingly so.", "You're showing off now.", "Okay fine, you're built different.", "This is getting suspicious.", "Double digits. Calm down."],
-  good: ["Serious consistency. Gross.", "You're actually doing it.", "Seven days. Who even are you?", "Respect. Reluctantly.", "This is real now."],
-  mid:  ["Building momentum. Don't ruin it.", "Three days in. Don't get cocky.", "Okay, you're trying.", "Momentum rising. Barely.", "Keep going before you forget."],
-  low:  ["Started. Try not to stop.", "One day. Let's not celebrate yet.", "A start. Suspicious, but a start.", "Day one. Classic.", "Fine. You showed up."],
-  zero: ["No momentum yet. Shocking.", "Zero streak. A bold choice.", "Nothing. Truly nothing.", "The streak is a myth right now.", "You could start. You won't. But you could."],
+  high: ["Unstoppable. Annoyingly so.", "You're showing off now.", "Okay fine, you're built different."],
+  good: ["Serious consistency. Gross.", "Seven days. Who even are you?", "This is real now."],
+  mid:  ["Building momentum. Don't ruin it.", "Three days in. Don't get cocky.", "Keep going before you forget."],
+  low:  ["Started. Try not to stop.", "One day. Let's not celebrate yet.", "Fine. You showed up."],
+  zero: ["No momentum yet. Shocking.", "Zero streak. A bold choice.", "The streak is a myth right now."],
 };
-const DONE_MSGS = ["Done? Nice. Bare minimum, but still nice.", "Saved. Your future self is mildly impressed.", "Logged. Don't expect applause.", "Done. One day at a time, apparently.", "Marked done. The bar was low. You cleared it.", "Okay fine, you did it.", "Logged. Try doing it again tomorrow."];
-const MISSED_MSGS = ["Missed it. Your future self is unimpressed.", "Logged as missed. Bold strategy.", "Skipped. The streak noticed.", "Missed. The habit didn't miss you though.", "Another miss. Interesting pattern.", "Noted. Not great, not great at all."];
 const MILESTONE_MSGS = {
-  3:  ["3-day streak. Now this is real.", "Three days. Okay, you're not quitting.", "3 in a row. Suspicious."],
-  7:  ["7-day streak. Suspiciously disciplined.", "A full week. Who are you?", "Seven days straight. Respect."],
-  10: ["10-day streak. Impressive.", "Double digits. Calm down.", "10 days. You're actually doing this."],
+  3:  ["3-day streak. Now this is real.", "Three days. Okay, you're not quitting."],
+  7:  ["7-day streak. Suspiciously disciplined.", "A full week. Who are you?"],
+  10: ["10-day streak. Impressive.", "Double digits. Calm down."],
 };
 
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
@@ -65,7 +69,9 @@ export default function HabitCard({ habit, onHideCompleted, onDelete }) {
   const [animateEmoji, setAnimateEmoji] = useState(false);
   const [currentStreakMsg, setCurrentStreakMsg] = useState(() => getStreakMsg(calculateStreak(buildDays(habit))));
   const [sharePreview, setSharePreview] = useState(null);
-  const [shareCopied, setShareCopied] = useState(false);
+  const [showExcuseModal, setShowExcuseModal] = useState(false);
+  const [streakToast, setStreakToast] = useState(null);
+  const [didItAnim, setDidItAnim] = useState(false);
   const previousStreakRef = useRef(calculateStreak(buildDays(habit)));
   const removedRef = useRef(false);
 
@@ -96,6 +102,8 @@ export default function HabitCard({ habit, onHideCompleted, onDelete }) {
     return "Pending";
   })();
 
+  const todayDone = todayStatus === "Done" || todayStatus === "Completed";
+
   const handleCelebration = (newStreak) => {
     if (!MILESTONES.includes(newStreak)) return;
     playMilestone();
@@ -110,18 +118,21 @@ export default function HabitCard({ habit, onHideCompleted, onDelete }) {
   const handleMark = async (status) => {
     if (saving || currentDayIndex === -1) return;
     setSaving(true);
+    if (status === "DONE") { setDidItAnim(true); setTimeout(() => setDidItAnim(false), 600); }
     try {
       await api.post("/habits/" + habit.id + "/log", { status: status.toUpperCase(), dayNumber: currentDayIndex + 1 });
       const updated = days.map((d, i) => i === currentDayIndex ? { ...d, status: status.toLowerCase() } : d);
       const newStreak = calculateStreak(updated);
       setDays(updated);
-      setFeedback(status === "DONE" ? pick(DONE_MSGS) : pick(MISSED_MSGS));
+      setFeedback(status === "DONE" ? getDoneMessage() : getMissedMessage());
       setCurrentStreakMsg(getStreakMsg(newStreak));
       if (status === "DONE") {
         if (newStreak > previousStreakRef.current) handleCelebration(newStreak);
         else playDone();
       } else {
         playMiss();
+        setShowExcuseModal(true);
+        if (previousStreakRef.current > 0 && newStreak === 0) setStreakToast(getStreakBrokenMessage());
       }
       previousStreakRef.current = newStreak;
       if (isFullyCompleted(updated)) {
@@ -153,20 +164,14 @@ export default function HabitCard({ habit, onHideCompleted, onDelete }) {
     setSharePreview(dataUrl);
   };
 
-  const handleShareLink = async () => {
-    const result = await shareCard(sharePreview, habit.name, streak);
-    if (result === "copied" || result === "shared") {
-      setShareCopied(true);
-      setTimeout(() => setShareCopied(false), 2500);
-    }
-  };
-
   const cardClass = "habit-card enhanced-habit-card" + (showConfetti ? " celebration-active" : "") + (isHiding ? " habit-card-hiding" : "");
   const badgeClass = "habit-type-badge " + (habit.timeBound ? "badge-timebound" : "badge-flexible");
   const delClass = "delete-habit-btn" + (confirmDelete ? " delete-confirm" : "");
 
   return (
     <div className={cardClass}>
+      {streakToast && <StreakToast message={streakToast} onDone={() => setStreakToast(null)} />}
+      {showExcuseModal && <ExcuseModal habitId={habit.id} habitName={habit.name} onClose={() => setShowExcuseModal(false)} />}
       {showConfetti && (
         <div className="confetti-layer" aria-hidden="true">
           {Array.from({ length: 24 }).map((_, i) => (
@@ -174,24 +179,8 @@ export default function HabitCard({ habit, onHideCompleted, onDelete }) {
           ))}
         </div>
       )}
-
       {sharePreview && (
-        <div className="share-modal-overlay" onClick={() => setSharePreview(null)}>
-          <div className="share-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="share-modal-header">
-              <p className="share-modal-title">Your streak card ??</p>
-              <button className="share-x-btn" onClick={() => setSharePreview(null)}>x</button>
-            </div>
-            <img src={sharePreview} alt="streak card" className="share-preview-img" />
-            <p className="share-modal-hint">Flex this. You earned it.</p>
-            <div className="share-modal-actions">
-              <button className="share-download-btn" onClick={() => downloadShareCard(sharePreview, habit.name)}>Download</button>
-              <button className="share-link-btn" onClick={handleShareLink}>
-                {shareCopied ? "Copied!" : "Share Link"}
-              </button>
-            </div>
-          </div>
-        </div>
+        <ShareModal habit={habit} streak={streak} completedCount={completedCount} duration={duration} onClose={() => setSharePreview(null)} />
       )}
 
       <div className="habit-card-main">
@@ -214,28 +203,51 @@ export default function HabitCard({ habit, onHideCompleted, onDelete }) {
             </div>
           </div>
         </div>
+
         <DayBubbleRow days={days} currentDayIndex={currentDayIndex} />
-        <div className="habit-summary-row"><span>{completedCount}/{duration} days done</span><span>{progress}% complete</span></div>
-        <div className="progress-bar-shell"><div className="progress-bar-fill" style={{ width: progress + "%" }} /></div>
+
+        <div className="habit-summary-row">
+          <span>{completedCount}/{duration} days done</span>
+          <span>{progress}% complete</span>
+        </div>
+        <div className="progress-bar-shell">
+          <div className="progress-bar-fill" style={{ width: progress + "%" }} />
+        </div>
+
         <div className="current-day-panel">
           {fullyDone && <p className="current-day-text">Done. You completed the whole habit. Weirdly impressive.</p>}
           {!fullyDone && currentDayIndex === -1 && <p className="current-day-text">Habit period is over. Moving to history...</p>}
           {!fullyDone && currentDayIndex !== -1 && (
             <div>
-              <p className="current-day-text">Current day: <strong>Day {currentDayIndex + 1}</strong></p>
+              <p className="current-day-text">Day <strong>{currentDayIndex + 1}</strong></p>
               <div className="habit-actions">
-                <button className="done-btn" onClick={() => handleMark("DONE")} disabled={saving}>{saving ? "Saving..." : "Mark Done"}</button>
-                <button className="miss-btn" onClick={() => handleMark("MISSED")} disabled={saving}>{saving ? "Saving..." : "Miss Day"}</button>
+                {todayDone ? (
+                  <button className="i-did-it-btn i-did-it-done" disabled>Done Today</button>
+                ) : (
+                  <button
+                    className={"i-did-it-btn" + (didItAnim ? " i-did-it-pulse" : "")}
+                    onClick={() => handleMark("DONE")}
+                    disabled={saving}
+                  >
+                    {saving ? "Saving..." : "I DID IT"}
+                  </button>
+                )}
+                <button className="miss-btn" onClick={() => handleMark("MISSED")} disabled={saving || todayDone}>
+                  {saving ? "..." : "Miss Day"}
+                </button>
               </div>
             </div>
           )}
         </div>
+
         <p className="habit-message">{completionNotice || feedback || currentStreakMsg}</p>
+        <AnalyticsInsights days={days} createdDate={habit.createdDate} />
       </div>
+
       <div className="streak-side-box">
         <div className="streak-pill">{streak} day streak</div>
         <div className={"big-emoji-box" + (animateEmoji ? " emoji-bounce" : "")}>
-          <div className="big-emoji">{EMOJI[emojiKey]}</div>
+          <div className="big-emoji">{EMOJI_CHARS[emojiKey]}</div>
           <div className="big-emoji-text">{emojiText}</div>
         </div>
         {celebrationText && <div className={"celebration-banner" + (showConfetti ? " show-banner" : "")}>{celebrationText}</div>}
@@ -245,8 +257,8 @@ export default function HabitCard({ habit, onHideCompleted, onDelete }) {
         <div className="streak-metrics"><span>Days left</span><strong>{daysLeft}</strong></div>
         <div className="pressure-box">
           <div className="pressure-title">Pressure</div>
-          <div className="pressure-line">{todayStatus === "Done" || todayStatus === "Completed" ? "Completed today" : "You haven't done this today"}</div>
-          <div className="streak-warning">{todayStatus === "Done" || todayStatus === "Completed" ? "Today's entry is safe." : "Miss today - streak resets to 0"}</div>
+          <div className="pressure-line">{todayDone ? "Completed today" : "You haven't done this today"}</div>
+          <div className="streak-warning">{todayDone ? "Today's entry is safe." : "Miss today - streak resets to 0"}</div>
         </div>
         <div className="streak-roast-box">{currentStreakMsg}</div>
       </div>
