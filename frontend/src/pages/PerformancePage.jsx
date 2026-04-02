@@ -3,7 +3,6 @@ import Navbar from '../components/Navbar';
 import api from '../api/client';
 import { getScoreEmoji, getScoreMessage } from '../utils/score';
 import { computeOverallAnalytics } from '../utils/analytics';
-import ModeSelector from '../components/ModeSelector';
 
 export default function PerformancePage() {
   const [performance, setPerformance] = useState(null);
@@ -192,14 +191,6 @@ export default function PerformancePage() {
               );
             })()}
 
-            {/* ── Mode selector — only affects new feedback messages ── */}
-            <div className="glass-card" style={{ padding: '24px', borderRadius: '24px' }}>
-              <h3 style={{ marginBottom: '14px' }}>Feedback Mode</h3>
-              <p className="muted" style={{ marginBottom: '14px', fontSize: '0.9rem' }}>
-                Controls the tone of feedback messages when you mark habits. Existing UI text is unaffected.
-              </p>
-              <ModeSelector />
-            </div>
           </>
         )}
       </div>
