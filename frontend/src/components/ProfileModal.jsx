@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { loadPrefs, savePrefs } from '../utils/userPrefs';
 import { loadAvatar, saveAvatar, getAvatarGradientStyle, getEmojiById } from '../utils/avatarConfig';
 import { applyTheme, getSavedTheme } from '../utils/themeConfig';
@@ -52,25 +52,29 @@ function Toggle({ checked, onChange, label }) {
   );
 }
 
-function Section({ title, children }) {
+// Plain section — no accordion, always visible
+function Section({ heading, children }) {
   return (
-    <div className="pref-section">
-      <p className="pref-section-title">{title}</p>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      <p style={{
+        margin: 0, fontSize: '0.72rem', fontWeight: 800,
+        letterSpacing: '0.12em', textTransform: 'uppercase',
+        color: 'var(--text-soft)',
+      }}>{heading}</p>
       {children}
     </div>
   );
 }
 
-function CollapseSection({ title, defaultOpen = false, children }) {
-  const [open, setOpen] = useState(defaultOpen);
+function Divider() {
+  return <div style={{ height: '1px', background: 'var(--panel-border)', margin: '4px 0' }} />;
+}
+
+function FieldLabel({ children }) {
   return (
-    <div className="collapse-section">
-      <button type="button" className="collapse-header" onClick={() => setOpen((o) => !o)}>
-        <span>{title}</span>
-        <span className={`collapse-arrow ${open ? 'collapse-open' : ''}`}>{'>'}</span>
-      </button>
-      {open && <div className="collapse-body">{children}</div>}
-    </div>
+    <p style={{ margin: '0 0 6px', fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-muted)' }}>
+      {children}
+    </p>
   );
 }
 
@@ -79,7 +83,6 @@ export default function ProfileModal({ onClose }) {
   const email = user?.email;
   const firstName = user?.name?.split(' ')[0] || 'User';
   const initial = firstName.charAt(0).toUpperCase();
-  const scrollRef = useRef(null);
 
   const [prefs, setPrefs] = useState(() => loadPrefs(email));
   const [avatar, setAvatar] = useState(() => loadAvatar(email));
@@ -94,10 +97,7 @@ export default function ProfileModal({ onClose }) {
 
   const set = (key, val) => setPrefs((p) => ({ ...p, [key]: val }));
 
-  const handleThemeChange = (val) => {
-    setTheme(val);
-    applyTheme(val);
-  };
+  const handleThemeChange = (val) => { setTheme(val); applyTheme(val); };
 
   const handleSave = () => {
     savePrefs(email, { ...prefs, theme });
@@ -119,13 +119,11 @@ export default function ProfileModal({ onClose }) {
         position: 'fixed', inset: 0, zIndex: 9999,
         background: 'rgba(0,0,0,0.45)',
         backdropFilter: 'blur(5px)',
-        display: 'flex',
-        alignItems: 'flex-start',
-        justifyContent: 'flex-end',
-        padding: '16px',
-        overflow: 'hidden',
+        display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end',
+        padding: '16px', overflow: 'hidden',
       }}
     >
+      {/* Modal panel */}
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
@@ -139,15 +137,15 @@ export default function ProfileModal({ onClose }) {
           overflow: 'hidden',
         }}
       >
-        {/* Header */}
+        {/* Header — sticky */}
         <div style={{
-          display: 'flex', alignItems: 'center', gap: '14px',
-          padding: '18px 18px 14px',
+          display: 'flex', alignItems: 'center', gap: '12px',
+          padding: '16px 18px 14px',
           borderBottom: '1px solid var(--panel-border)',
-          flexShrink: 0,
+          flexShrink: 0, background: 'var(--surface-strong)',
         }}>
           <div style={{
-            width: 46, height: 46, borderRadius: '50%',
+            width: 44, height: 44, borderRadius: '50%',
             display: 'grid', placeItems: 'center',
             fontWeight: 800, fontSize: '1.1rem', color: '#fff',
             background: avatarGrad, flexShrink: 0,
@@ -165,134 +163,134 @@ export default function ProfileModal({ onClose }) {
           <button onClick={onClose} style={{
             width: 32, height: 32, border: 'none', borderRadius: '8px',
             background: 'var(--surface-soft)', color: 'var(--text-muted)',
-            fontSize: '0.95rem', cursor: 'pointer', display: 'grid', placeItems: 'center', flexShrink: 0,
+            fontSize: '1rem', cursor: 'pointer', display: 'grid', placeItems: 'center', flexShrink: 0,
           }}>X</button>
         </div>
 
-        {/* Scrollable content */}
-        <div
-          ref={scrollRef}
-          style={{
-            flex: '1 1 auto',
-            minHeight: 0,
-            overflowY: 'scroll',
-            WebkitOverflowScrolling: 'touch',
-            padding: '14px 16px 20px',
-            display: 'flex', flexDirection: 'column', gap: '12px',
-          }}
-        >
-          <CollapseSection title="Appearance" defaultOpen={true}>
-            <Section title="Theme">
-              <ThemePicker current={theme} onChange={handleThemeChange} />
-            </Section>
-            <Section title="Avatar">
-              <AvatarPicker value={avatar} onChange={setAvatar} initial={initial} />
-            </Section>
-          </CollapseSection>
+        {/* ONE scrollable area — all content visible, no accordions */}
+        <div style={{
+          flex: '1 1 auto', minHeight: 0,
+          overflowY: 'scroll',
+          WebkitOverflowScrolling: 'touch',
+          padding: '18px 18px 24px',
+          display: 'flex', flexDirection: 'column', gap: '20px',
+        }}>
 
-          <CollapseSection title="Identity" defaultOpen={false}>
-            <Section title="Display name">
-              <input className="pref-input"
-                placeholder={`e.g. ${firstName}, champ, boss...`}
-                value={prefs.nickname}
-                onChange={(e) => set('nickname', e.target.value)}
-                maxLength={24} />
-            </Section>
-            <Section title="How should SlayIt greet you?">
-              <PillGroup value={prefs.greetingStyle} onChange={(v) => set('greetingStyle', v)}
-                options={[
-                  { value: 'casual',       label: 'Casual',     emoji: '' },
-                  { value: 'motivational', label: 'Hype me up', emoji: '' },
-                  { value: 'sarcastic',    label: 'Sarcastic',  emoji: '' },
-                ]} />
-            </Section>
-          </CollapseSection>
+          {/* APPEARANCE */}
+          <Section heading="Appearance">
+            <FieldLabel>Theme</FieldLabel>
+            <ThemePicker current={theme} onChange={handleThemeChange} />
+            <FieldLabel>Avatar</FieldLabel>
+            <AvatarPicker value={avatar} onChange={setAvatar} initial={initial} />
+          </Section>
 
-          <CollapseSection title="Feedback and Motivation" defaultOpen={false}>
-            <Section title="Tone">
-              <PillGroup value={prefs.toneMode} onChange={(v) => set('toneMode', v)}
-                options={[
-                  { value: 'soft',       label: 'Soft' },
-                  { value: 'discipline', label: 'Discipline' },
-                  { value: 'savage',     label: 'Savage' },
-                ]} />
-              <p className="pref-hint">
-                {prefs.toneMode === 'soft' && 'Gentle, supportive messages.'}
-                {prefs.toneMode === 'discipline' && 'Direct, honest, no fluff.'}
-                {prefs.toneMode === 'savage' && 'Zero mercy. Maximum sarcasm.'}
-              </p>
-            </Section>
-            <Section title="Motivation style">
-              <PillGroup value={prefs.motivationStyle} onChange={(v) => set('motivationStyle', v)}
-                options={[
-                  { value: 'gentle',      label: 'Encourage me gently' },
-                  { value: 'accountable', label: 'Keep me accountable' },
-                  { value: 'brutal',      label: 'Be brutally honest' },
-                ]} />
-            </Section>
-          </CollapseSection>
+          <Divider />
 
-          <CollapseSection title="Goals and Accountability" defaultOpen={false}>
-            <Section title="What are you mainly trying to improve?">
-              <MultiPillGroup value={prefs.mainGoal} onChange={(v) => set('mainGoal', v)}
-                options={[
-                  { value: 'fitness',      label: 'Fitness' },
-                  { value: 'studies',      label: 'Studies' },
-                  { value: 'health',       label: 'Health' },
-                  { value: 'sleep',        label: 'Sleep' },
-                  { value: 'productivity', label: 'Productivity' },
-                  { value: 'custom',       label: 'Custom' },
-                ]} />
-              {hasCustomGoal && (
-                <input className="pref-input" placeholder="Describe your goal..."
-                  value={prefs.customGoal}
-                  onChange={(e) => set('customGoal', e.target.value)}
-                  maxLength={60} style={{ marginTop: '10px' }} />
-              )}
-            </Section>
-            <Section title="What hits you harder?">
-              <MultiPillGroup value={prefs.painTrigger} onChange={(v) => set('painTrigger', v)}
-                options={[
-                  { value: 'streak',      label: 'Losing streaks' },
-                  { value: 'goals',       label: 'Missing goals' },
-                  { value: 'time',        label: 'Wasting time' },
-                  { value: 'consistency', label: 'Bad consistency reports' },
-                ]} />
-            </Section>
-          </CollapseSection>
+          {/* IDENTITY */}
+          <Section heading="Identity">
+            <FieldLabel>Display name</FieldLabel>
+            <input className="pref-input"
+              placeholder={`e.g. ${firstName}, champ, boss...`}
+              value={prefs.nickname}
+              onChange={(e) => set('nickname', e.target.value)}
+              maxLength={24} />
+            <FieldLabel>How should SlayIt greet you?</FieldLabel>
+            <PillGroup value={prefs.greetingStyle} onChange={(v) => set('greetingStyle', v)}
+              options={[
+                { value: 'casual',       label: 'Casual' },
+                { value: 'motivational', label: 'Hype me up' },
+                { value: 'sarcastic',    label: 'Sarcastic' },
+              ]} />
+          </Section>
 
-          <CollapseSection title="Reminders" defaultOpen={false}>
-            <Section title="Reminders">
-              <Toggle checked={prefs.reminderEnabled}
-                onChange={(v) => set('reminderEnabled', v)}
-                label="Enable reminders" />
-              {prefs.reminderEnabled && (
-                <div style={{ marginTop: '12px' }}>
-                  <p className="pref-sub-label">When?</p>
-                  <MultiPillGroup value={prefs.reminderTiming} onChange={(v) => set('reminderTiming', v)}
-                    options={[
-                      { value: 'morning', label: 'Morning' },
-                      { value: 'evening', label: 'Evening' },
-                      { value: 'both',    label: 'Both' },
-                      { value: 'smart',   label: 'Smart' },
-                    ]} />
-                </div>
-              )}
-            </Section>
-            <Section title="Weekly review">
-              <Toggle checked={prefs.weeklyReview}
-                onChange={(v) => set('weeklyReview', v)}
-                label="Send me a weekly performance summary" />
-            </Section>
-          </CollapseSection>
+          <Divider />
 
-          {/* Save at bottom of scroll */}
-          <div style={{ paddingTop: '8px' }}>
+          {/* FEEDBACK */}
+          <Section heading="Feedback and Motivation">
+            <FieldLabel>Tone</FieldLabel>
+            <PillGroup value={prefs.toneMode} onChange={(v) => set('toneMode', v)}
+              options={[
+                { value: 'soft',       label: 'Soft' },
+                { value: 'discipline', label: 'Discipline' },
+                { value: 'savage',     label: 'Savage' },
+              ]} />
+            <p className="pref-hint" style={{ margin: 0 }}>
+              {prefs.toneMode === 'soft' && 'Gentle, supportive messages.'}
+              {prefs.toneMode === 'discipline' && 'Direct, honest, no fluff.'}
+              {prefs.toneMode === 'savage' && 'Zero mercy. Maximum sarcasm.'}
+            </p>
+            <FieldLabel>Motivation style</FieldLabel>
+            <PillGroup value={prefs.motivationStyle} onChange={(v) => set('motivationStyle', v)}
+              options={[
+                { value: 'gentle',      label: 'Encourage me gently' },
+                { value: 'accountable', label: 'Keep me accountable' },
+                { value: 'brutal',      label: 'Be brutally honest' },
+              ]} />
+          </Section>
+
+          <Divider />
+
+          {/* GOALS */}
+          <Section heading="Goals and Accountability">
+            <FieldLabel>What are you mainly trying to improve?</FieldLabel>
+            <MultiPillGroup value={prefs.mainGoal} onChange={(v) => set('mainGoal', v)}
+              options={[
+                { value: 'fitness',      label: 'Fitness' },
+                { value: 'studies',      label: 'Studies' },
+                { value: 'health',       label: 'Health' },
+                { value: 'sleep',        label: 'Sleep' },
+                { value: 'productivity', label: 'Productivity' },
+                { value: 'custom',       label: 'Custom' },
+              ]} />
+            {hasCustomGoal && (
+              <input className="pref-input" placeholder="Describe your goal..."
+                value={prefs.customGoal}
+                onChange={(e) => set('customGoal', e.target.value)}
+                maxLength={60} />
+            )}
+            <FieldLabel>What hits you harder?</FieldLabel>
+            <MultiPillGroup value={prefs.painTrigger} onChange={(v) => set('painTrigger', v)}
+              options={[
+                { value: 'streak',      label: 'Losing streaks' },
+                { value: 'goals',       label: 'Missing goals' },
+                { value: 'time',        label: 'Wasting time' },
+                { value: 'consistency', label: 'Bad consistency' },
+              ]} />
+          </Section>
+
+          <Divider />
+
+          {/* REMINDERS */}
+          <Section heading="Reminders">
+            <Toggle checked={prefs.reminderEnabled}
+              onChange={(v) => set('reminderEnabled', v)}
+              label="Enable reminders" />
+            {prefs.reminderEnabled && (
+              <>
+                <FieldLabel>When?</FieldLabel>
+                <MultiPillGroup value={prefs.reminderTiming} onChange={(v) => set('reminderTiming', v)}
+                  options={[
+                    { value: 'morning', label: 'Morning' },
+                    { value: 'evening', label: 'Evening' },
+                    { value: 'both',    label: 'Both' },
+                    { value: 'smart',   label: 'Smart' },
+                  ]} />
+              </>
+            )}
+            <Toggle checked={prefs.weeklyReview}
+              onChange={(v) => set('weeklyReview', v)}
+              label="Weekly performance summary" />
+          </Section>
+
+          <Divider />
+
+          {/* SAVE */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {saved && (
               <p style={{
-                margin: '0 0 12px', textAlign: 'center', fontSize: '0.88rem',
-                fontWeight: 700, color: 'var(--bubble-done-text)',
-                background: 'var(--bubble-done-bg)', padding: '10px 14px', borderRadius: '12px',
+                margin: 0, textAlign: 'center', fontSize: '0.88rem', fontWeight: 700,
+                color: 'var(--bubble-done-text)', background: 'var(--bubble-done-bg)',
+                padding: '10px 14px', borderRadius: '12px',
               }}>
                 Preferences saved.
               </p>
@@ -306,6 +304,7 @@ export default function ProfileModal({ onClose }) {
               Save Preferences
             </button>
           </div>
+
         </div>
       </div>
     </div>
