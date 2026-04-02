@@ -7,7 +7,6 @@ import { generateShareCard } from "../utils/shareCard";
 import { getMissedMessage, getDoneMessage, getStreakBrokenMessage, getMilestoneMessage } from "../utils/feedbackMessages";
 import ExcuseModal from "./ExcuseModal";
 import StreakToast from "./StreakToast";
-import AnalyticsInsights from "./AnalyticsInsights";
 import ShareModal from "./ShareModal";
 import "./streak-polish.css";
 
@@ -219,7 +218,6 @@ export default function HabitCard({ habit, onHideCompleted, onDelete }) {
           {!fullyDone && currentDayIndex === -1 && <p className="current-day-text">Habit period is over. Moving to history...</p>}
           {!fullyDone && currentDayIndex !== -1 && (
             <div>
-              <p className="current-day-text">Day <strong>{currentDayIndex + 1}</strong></p>
               <div className="habit-actions">
                 {todayDone ? (
                   <button className="i-did-it-btn i-did-it-done" disabled>Done Today</button>
@@ -241,7 +239,6 @@ export default function HabitCard({ habit, onHideCompleted, onDelete }) {
         </div>
 
         <p className="habit-message">{completionNotice || feedback || currentStreakMsg}</p>
-        <AnalyticsInsights days={days} createdDate={habit.createdDate} />
       </div>
 
       <div className="streak-side-box">
